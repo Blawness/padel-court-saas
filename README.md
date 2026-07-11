@@ -107,6 +107,14 @@ bookable again. A `pending_payment` hold lasts **10 minutes**; lapsed holds are 
 `/api/cron/release-holds` (Vercel Cron, every 5 min — see `vercel.json`) as a safety net for
 slots nobody is currently viewing.
 
+## Dev server: use `localhost`
+
+`next dev` only trusts the `localhost` origin by default. Reaching it on another origin
+(`127.0.0.1`, or the WSL host IP from a Windows browser) makes it reject the HMR websocket
+upgrade, which silently aborts the client bootstrap — the page renders fine but **never
+hydrates**, so nothing is clickable and scroll-reveal never fires. `next.config.ts` now sets
+`allowedDevOrigins` so both `localhost` and `127.0.0.1` work. Production builds are unaffected.
+
 ## Timezone
 
 The product is Indonesia-only, so venue wall-clock time is always **WIB (UTC+7)**. Slot times,

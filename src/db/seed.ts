@@ -80,12 +80,32 @@ async function main() {
 
   const periodEnd = new Date();
   periodEnd.setMonth(periodEnd.getMonth() + 1);
-  await db.insert(subscriptions).values({
-    ownerId: owner.id,
-    planId: pro.id,
-    status: "active",
-    currentPeriodEnd: periodEnd,
-  });
+  const [ownerSub] = await db
+    .insert(subscriptions)
+    .values({
+      ownerId: owner.id,
+      planId: pro.id,
+      status: "active",
+      currentPeriodEnd: periodEnd,
+    })
+    .returning();
+
+  // Six months of paid subscription cycles, so the admin MRR chart has a history to draw.
+  for (let monthsAgo = 5; monthsAgo >= 0; monthsAgo--) {
+    const paidAt = new Date();
+    paidAt.setMonth(paidAt.getMonth() - monthsAgo);
+    paidAt.setDate(3);
+
+    await db.insert(payments).values({
+      subscriptionId: ownerSub.id,
+      midtransOrderId: `SUB-SEED-${paidAt.getFullYear()}${String(paidAt.getMonth() + 1).padStart(2, "0")}`,
+      amount: pro.monthlyPrice,
+      status: "success",
+      paymentMethod: "bank_transfer",
+      paidAt,
+      createdAt: paidAt,
+    });
+  }
 
   const players = await db
     .insert(users)

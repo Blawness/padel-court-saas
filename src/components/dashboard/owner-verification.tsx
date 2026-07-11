@@ -10,7 +10,10 @@ type OwnerRow = {
   fullName: string;
   email: string;
   ownerStatus: OwnerStatus;
+  venueName: string | null;
   venueCount: number;
+  city: string | null;
+  createdAt: string;
   planName: string | null;
   subStatus: SubscriptionStatus | null;
 };
@@ -20,6 +23,18 @@ const statusChip: Record<OwnerStatus, { cls: string; label: string }> = {
   approved: { cls: "chip-green", label: "Terverifikasi" },
   suspended: { cls: "chip-red", label: "Disuspend" },
 };
+
+/** "2 jam lalu" / "3 hari lalu" — matches the mockup's Join column. */
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 60) return `${Math.max(minutes, 1)} menit lalu`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days} hari lalu`;
+  return `${Math.round(days / 30)} bulan lalu`;
+}
 
 export function OwnerVerification({ owners }: { owners: OwnerRow[] }) {
   const router = useRouter();
@@ -38,17 +53,26 @@ export function OwnerVerification({ owners }: { owners: OwnerRow[] }) {
       toast("Gagal memperbarui owner.", "error");
       return;
     }
-    toast(ownerStatus === "approved" ? "Owner diverifikasi." : "Owner disuspend.");
+    toast(
+      ownerStatus === "approved"
+        ? "Owner disetujui — venue-nya kini tayang ke pemain."
+        : "Owner disuspend — venue-nya disembunyikan.",
+    );
     router.refresh();
   };
 
   return (
-    <div className="reveal card overflow-hidden">
-      <div className="border-b border-gray-100 p-5 dark:border-white/10">
-        <h2 className="font-bold">Verifikasi Pemilik Venue</h2>
-        <p className="text-xs text-gray-400">
-          Signup owner bersifat self-serve; venue baru tayang ke pemain setelah diverifikasi.
-        </p>
+    <div className="reveal card overflow-hidden rounded-2xl">
+      <div className="flex items-center justify-between border-b border-gray-100 p-5 dark:border-white/10">
+        <div>
+          <h2 className="font-bold">Verifikasi Owner Baru</h2>
+          <p className="text-xs text-gray-400">
+            Signup owner self-serve; venue baru tayang ke pemain setelah disetujui.
+          </p>
+        </div>
+        <span className="chip chip-amber">
+          {owners.filter((o) => o.ownerStatus === "pending").length} menunggu
+        </span>
       </div>
 
       <div className="overflow-x-auto">
@@ -57,19 +81,34 @@ export function OwnerVerification({ owners }: { owners: OwnerRow[] }) {
             <tr>
               <th>Owner</th>
               <th>Venue</th>
+              <th>Kota</th>
               <th>Paket</th>
               <th>Status</th>
-              <th />
+              <th>Join</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {owners.map((o) => (
               <tr key={o.id}>
                 <td>
-                  <span className="font-semibold">{o.fullName}</span>
-                  <span className="block text-xs text-gray-400">{o.email}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="from-brand-500 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br to-teal-500 text-xs font-bold text-white">
+                      {o.fullName.charAt(0).toUpperCase()}
+                    </span>
+                    <span>
+                      <span className="block font-semibold">{o.fullName}</span>
+                      <span className="block text-xs text-gray-400">{o.email}</span>
+                    </span>
+                  </div>
                 </td>
-                <td>{o.venueCount}</td>
+                <td>
+                  {o.venueName ?? <span className="text-gray-400">—</span>}
+                  {o.venueCount > 1 ? (
+                    <span className="block text-xs text-gray-400">+{o.venueCount - 1} lainnya</span>
+                  ) : null}
+                </td>
+                <td>{o.city ?? <span className="text-gray-400">—</span>}</td>
                 <td>
                   {o.planName ? (
                     <>
@@ -85,16 +124,17 @@ export function OwnerVerification({ owners }: { owners: OwnerRow[] }) {
                     {statusChip[o.ownerStatus].label}
                   </span>
                 </td>
-                <td className="text-right">
-                  <div className="flex justify-end gap-3">
+                <td className="text-gray-400">{relativeTime(o.createdAt)}</td>
+                <td>
+                  <div className="flex gap-3">
                     {o.ownerStatus !== "approved" ? (
                       <button
                         type="button"
                         disabled={busy === o.id}
                         onClick={() => setStatus(o.id, "approved")}
-                        className="text-brand-600 text-sm font-semibold"
+                        className="text-sm font-semibold text-green-600 disabled:opacity-40"
                       >
-                        Verifikasi
+                        Setujui
                       </button>
                     ) : null}
                     {o.ownerStatus !== "suspended" ? (
@@ -102,9 +142,9 @@ export function OwnerVerification({ owners }: { owners: OwnerRow[] }) {
                         type="button"
                         disabled={busy === o.id}
                         onClick={() => setStatus(o.id, "suspended")}
-                        className="text-sm font-semibold text-red-500"
+                        className="text-sm font-semibold text-red-600 disabled:opacity-40"
                       >
-                        Suspend
+                        {o.ownerStatus === "pending" ? "Tolak" : "Suspend"}
                       </button>
                     ) : null}
                   </div>
@@ -113,7 +153,7 @@ export function OwnerVerification({ owners }: { owners: OwnerRow[] }) {
             ))}
             {owners.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-10 text-center text-gray-400">
+                <td colSpan={7} className="py-10 text-center text-gray-400">
                   Belum ada pemilik venue.
                 </td>
               </tr>
