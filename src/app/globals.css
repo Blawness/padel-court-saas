@@ -1,0 +1,421 @@
+@import "tailwindcss";
+
+/* Dark mode is class-based (toggled on <html>), matching the mockup. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display: "Sora", "Plus Jakarta Sans", sans-serif;
+
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
+
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+
+  /* app surfaces */
+  --color-ink: #0a0f0d;
+  --color-panel: #111714;
+  --color-panel-deep: #0c120f;
+}
+
+:root {
+  color-scheme: light dark;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  font-family: var(--font-sans);
+}
+
+/* ---------- scroll progress ---------- */
+#bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  z-index: 100;
+  background: linear-gradient(90deg, #22c55e, #14b8a6);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+}
+
+/* ---------- gradients & blobs ---------- */
+@keyframes aurora {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.aurora {
+  background: linear-gradient(120deg, #22c55e, #14b8a6, #a3e635, #22c55e);
+  background-size: 300% 300%;
+  animation: aurora 14s ease infinite;
+}
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.1); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+.blob { animation: blob 12s ease-in-out infinite; }
+.blob2 { animation: blob 16s ease-in-out infinite reverse; }
+
+@keyframes shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.gtext {
+  background: linear-gradient(90deg, #16a34a, #0d9488, #84cc16, #16a34a);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shift 6s ease infinite;
+}
+
+/* ---------- reveal-on-scroll ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(34px);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.in { opacity: 1; transform: none; }
+.reveal.d1 { transition-delay: 0.1s; }
+.reveal.d2 { transition-delay: 0.2s; }
+.reveal.d3 { transition-delay: 0.3s; }
+.reveal.d4 { transition-delay: 0.4s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .aurora, .blob, .blob2, .gtext, .pdot, .marq, .fball, .spin-slow { animation: none; }
+  .shimmer::after { animation: none; }
+}
+
+/* ---------- card lift ---------- */
+.lift {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease,
+    border-color 0.4s;
+}
+.lift:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 30px 60px -18px rgba(0, 0, 0, 0.22);
+}
+
+/* ---------- animated conic border ---------- */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes borderRun { to { --angle: 360deg; } }
+.glow-border { position: relative; }
+.glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--angle), transparent 60%, #22c55e, #14b8a6, transparent);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: borderRun 4s linear infinite;
+}
+
+/* ---------- pulse dot ---------- */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); }
+  70% { box-shadow: 0 0 0 16px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+.pdot { animation: pulse-ring 2.2s infinite; }
+
+/* ---------- marquee ---------- */
+@keyframes marq {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marq { display: flex; width: max-content; animation: marq 28s linear infinite; }
+.marquee-wrap:hover .marq { animation-play-state: paused; }
+
+/* ---------- shimmer button ---------- */
+.shimmer { position: relative; overflow: hidden; }
+.shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-20deg);
+  animation: sh 3.5s infinite;
+}
+@keyframes sh {
+  0% { left: -120%; }
+  45% { left: 140%; }
+  100% { left: 140%; }
+}
+
+/* ---------- hero: floating ball + slow spin behind the card ---------- */
+@keyframes fb {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-22px) rotate(12deg); }
+}
+.fball { animation: fb 5s ease-in-out infinite; }
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.spin-slow { animation: spin-slow 26s linear infinite; }
+
+/* ---------- dots overlay ---------- */
+.dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* ---------- theme switch ---------- */
+.switch {
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  position: relative;
+  cursor: pointer;
+  transition: 0.3s;
+  flex: none;
+}
+.dark .switch { background: #334155; }
+.switch.on { background: #16a34a; }
+.switch .knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.switch.on .knob { left: 27px; }
+
+/* ============================================================
+   Component classes live in @layer components so Tailwind
+   utilities (a later layer) can override them. Unlayered CSS
+   beats ANY layered CSS regardless of specificity, which would
+   silently kill every `rounded-2xl` / `py-3.5` / `w-full` we
+   put on a .card, .btn-primary, .slot, or .input.
+   ============================================================ */
+@layer components {
+  /* ---------- app shell (dashboard) ---------- */
+  .shell {
+    display: grid;
+    grid-template-columns: 264px 1fr;
+    min-height: 100vh;
+  }
+  @media (max-width: 1023px) {
+    .shell { grid-template-columns: 1fr; }
+    .side { display: none; }
+  }
+  .side { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: 0.2s;
+  }
+  .dark .nav-item { color: #94a3b8; }
+  .nav-item:hover { background: rgba(34, 197, 94, 0.08); color: #16a34a; }
+  .nav-item.active { background: rgba(34, 197, 94, 0.14); color: #16a34a; }
+  .dark .nav-item.active { background: rgba(34, 197, 94, 0.18); }
+
+  /* ---------- chips ---------- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .chip-green { background: #dcfce7; color: #15803d; }
+  .dark .chip-green { background: rgba(34, 197, 94, 0.18); color: #86efac; }
+  .chip-blue { background: #dbeafe; color: #1d4ed8; }
+  .dark .chip-blue { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+  .chip-amber { background: #fef3c7; color: #b45309; }
+  .dark .chip-amber { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+  .chip-gray { background: #f1f5f9; color: #475569; }
+  .dark .chip-gray { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; }
+  .chip-red { background: #fee2e2; color: #b91c1c; }
+  .dark .chip-red { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+
+  /* ---------- slot grid ---------- */
+  .slot {
+    padding: 0.55rem;
+    text-align: center;
+    border-radius: 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .dark .slot {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: #cbd5e1;
+  }
+  .slot:hover:not(:disabled) {
+    border-color: #22c55e;
+    color: #16a34a;
+  }
+  .slot-free { background: #f0fdf4; }
+  .dark .slot-free { background: rgba(34, 197, 94, 0.08); }
+  .slot-sel {
+    background: #16a34a !important;
+    color: #fff !important;
+    border-color: #16a34a !important;
+  }
+  .slot-taken,
+  .slot-past {
+    background: #f1f5f9;
+    color: #cbd5e1;
+    cursor: not-allowed;
+  }
+  .slot-taken { text-decoration: line-through; }
+  .dark .slot-taken,
+  .dark .slot-past { background: rgba(255, 255, 255, 0.04); }
+  .slot-held {
+    background: #fef3c7;
+    color: #b45309;
+    border-color: #fcd34d;
+    cursor: not-allowed;
+  }
+  .dark .slot-held { background: rgba(245, 158, 11, 0.15); }
+
+  /* ---------- table ---------- */
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th {
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .dark .tbl th { border-color: rgba(255, 255, 255, 0.1); }
+  .tbl td {
+    padding: 0.85rem 1rem;
+    font-size: 0.88rem;
+    border-bottom: 1px solid #f1f5f9;
+    white-space: nowrap;
+  }
+  .dark .tbl td { border-color: rgba(255, 255, 255, 0.06); }
+  .tbl tbody tr { transition: 0.15s; }
+  .tbl tbody tr:hover { background: rgba(34, 197, 94, 0.05); }
+
+  /* ---------- inputs ---------- */
+  .input {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    font-size: 0.9rem;
+    transition: 0.2s;
+  }
+  .dark .input {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #e2e8f0;
+  }
+  .input:focus {
+    outline: none;
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+  }
+
+  /* ---------- buttons ---------- */
+  .btn-primary {
+    padding: 0.7rem 1.1rem;
+    border-radius: 0.75rem;
+    background: #16a34a;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: 0.2s;
+    box-shadow: 0 10px 24px -12px rgba(22, 163, 74, 0.8);
+    cursor: pointer;
+  }
+  .btn-primary:hover:not(:disabled) { background: #15803d; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+  .btn-ghost {
+    padding: 0.7rem 1.1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: 0.2s;
+    cursor: pointer;
+  }
+  .dark .btn-ghost { border-color: rgba(255, 255, 255, 0.12); }
+  .btn-ghost:hover { background: #f8fafc; }
+  .dark .btn-ghost:hover { background: rgba(255, 255, 255, 0.05); }
+
+  /* ---------- card ---------- */
+  .card {
+    background: #fff;
+    border: 1px solid #f1f5f9;
+    border-radius: 1.5rem;
+  }
+  .dark .card {
+    background: var(--color-panel);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+}
+
+/* ---------- toast ---------- */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(140%);
+  z-index: 200;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ---------- bar chart ---------- */
+.bar { border-radius: 6px 6px 0 0; transition: height 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* utility */
+.hide-scroll::-webkit-scrollbar { height: 0; }

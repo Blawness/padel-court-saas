@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil Saya — Padel Booking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.38.0/tabler-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Plus Jakarta Sans','system-ui','sans-serif'], display:['Sora','Plus Jakarta Sans','sans-serif'] }, colors:{ brand:{50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d'}, teal:{400:'#2dd4bf',500:'#14b8a6',600:'#0d9488'} } } } }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-50 dark:bg-[#0a0f0d] text-gray-900 dark:text-gray-100 transition-colors">
+<div id="bar"></div><div id="trail"></div>
+
+<header class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-[#0a0f0d]/80 border-b border-gray-100 dark:border-white/10">
+  <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2.5"><div class="w-9 h-9 rounded-xl aurora flex items-center justify-center"><i class="ti ti-paddle text-white text-lg"></i></div><span class="text-lg font-extrabold font-display gtext">Padel Booking</span></a>
+    <div class="flex items-center gap-3">
+      <a href="player-venues.html" class="px-4 py-2 text-brand-700 dark:text-brand-300 font-semibold rounded-lg hover:bg-brand-50 dark:hover:bg-white/5 transition">Cari Venue</a>
+      <div id="themeSwitch" class="switch" title="Dark mode"><div class="knob"></div></div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-6 py-8">
+  <!-- profile card -->
+  <div class="reveal bg-white dark:bg-[#111714] rounded-3xl border border-gray-100 dark:border-white/10 p-6 flex flex-col sm:flex-row items-center gap-5">
+    <img src="https://i.pravatar.cc/120?img=11" class="w-20 h-20 rounded-2xl object-cover">
+    <div class="flex-1 text-center sm:text-left">
+      <h1 class="text-2xl font-extrabold font-display">Rina Anjani</h1>
+      <p class="text-gray-500 dark:text-gray-400 text-sm">rina@email.com · +62 812-3456-7890</p>
+      <div class="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
+        <span class="chip chip-green"><i class="ti ti-circle-check"></i> Email terverifikasi</span>
+        <span class="chip chip-blue"><i class="ti ti-wallet"></i> Google terhubung</span>
+      </div>
+    </div>
+    <button class="px-5 py-2.5 border-2 border-brand-200 dark:border-white/10 rounded-xl font-semibold hover:bg-brand-50 dark:hover:bg-white/5 transition" onclick="toast('Edit profil')"><i class="ti ti-edit mr-1"></i> Edit</button>
+  </div>
+
+  <!-- stats -->
+  <div class="grid grid-cols-3 gap-4 mt-6">
+    <div class="reveal lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 text-center"><div class="text-3xl font-extrabold font-display text-brand-600 dark:text-brand-400">18</div><div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total Booking</div></div>
+    <div class="reveal d1 lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 text-center"><div class="text-3xl font-extrabold font-display text-brand-600 dark:text-brand-400">2</div><div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Akan Datang</div></div>
+    <div class="reveal d2 lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 text-center"><div class="text-3xl font-extrabold font-display text-brand-600 dark:text-brand-400">36</div><div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Jam Main</div></div>
+  </div>
+
+  <!-- tabs -->
+  <div class="mt-8 flex gap-2 border-b border-gray-200 dark:border-white/10">
+    <button class="tab-btn px-4 py-3 font-semibold border-b-2 border-brand-600 text-brand-600" data-tab="upcoming">Akan Datang</button>
+    <button class="tab-btn px-4 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="past">Riwayat</button>
+  </div>
+
+  <!-- upcoming -->
+  <div id="upcoming" class="tab-panel space-y-4 mt-6">
+    <div class="reveal lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="w-14 h-14 rounded-xl bg-brand-100 dark:bg-brand-500/15 grid place-items-center text-brand-600 dark:text-brand-400 shrink-0"><i class="ti ti-calendar-event text-2xl"></i></div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2"><h3 class="font-bold">Padel Central · Court 1</h3><span class="chip chip-green">Terkonfirmasi</span></div>
+        <div class="text-sm text-gray-500 dark:text-gray-400 mt-1"><i class="ti ti-calendar"></i> Sabtu, 18 Jul 2026 · 09:00–10:00 · <span class="font-semibold text-gray-700 dark:text-gray-300">Rp 150.000</span></div>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm hover:bg-gray-200 dark:hover:bg-white/10 transition" onclick="toast('E-ticket dibuka')"><i class="ti ti-ticket"></i> Tiket</button>
+        <button class="px-4 py-2 rounded-xl border border-red-200 text-red-600 dark:border-red-500/30 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-500/10 transition" onclick="toast('Booking dibatalkan (refund penuh)')">Batal</button>
+      </div>
+    </div>
+    <div class="reveal d1 lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="w-14 h-14 rounded-xl bg-brand-100 dark:bg-brand-500/15 grid place-items-center text-brand-600 dark:text-brand-400 shrink-0"><i class="ti ti-calendar-event text-2xl"></i></div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2"><h3 class="font-bold">Net & Wall · Court 3</h3><span class="chip chip-green">Terkonfirmasi</span></div>
+        <div class="text-sm text-gray-500 dark:text-gray-400 mt-1"><i class="ti ti-calendar"></i> Minggu, 26 Jul 2026 · 17:00–18:00 · <span class="font-semibold text-gray-700 dark:text-gray-300">Rp 120.000</span></div>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm hover:bg-gray-200 dark:hover:bg-white/10 transition" onclick="toast('E-ticket dibuka')"><i class="ti ti-ticket"></i> Tiket</button>
+        <button class="px-4 py-2 rounded-xl border border-red-200 text-red-600 dark:border-red-500/30 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-500/10 transition" onclick="toast('Booking dibatalkan (refund penuh)')">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- past -->
+  <div id="past" class="tab-panel space-y-4 mt-6 hidden">
+    <div class="reveal lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 flex flex-col sm:flex-row sm:items-center gap-4 opacity-90">
+      <div class="w-14 h-14 rounded-xl bg-gray-100 dark:bg-white/5 grid place-items-center text-gray-400 shrink-0"><i class="ti ti-check text-2xl"></i></div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2"><h3 class="font-bold">Smash Arena · Court 2</h3><span class="chip chip-gray">Selesai</span></div>
+        <div class="text-sm text-gray-500 dark:text-gray-400 mt-1"><i class="ti ti-calendar"></i> Sabtu, 04 Jul 2026 · 19:00–20:00 · <span class="font-semibold text-gray-700 dark:text-gray-300">Rp 130.000</span></div>
+      </div>
+      <button class="px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition" onclick="toast('Booking diulang')"><i class="ti ti-refresh"></i> Booking Lagi</button>
+    </div>
+    <div class="reveal d1 lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 flex flex-col sm:flex-row sm:items-center gap-4 opacity-90">
+      <div class="w-14 h-14 rounded-xl bg-gray-100 dark:bg-white/5 grid place-items-center text-gray-400 shrink-0"><i class="ti ti-x text-2xl"></i></div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2"><h3 class="font-bold">Gloria Padel · Court 1</h3><span class="chip chip-red">Dibatalkan</span></div>
+        <div class="text-sm text-gray-500 dark:text-gray-400 mt-1"><i class="ti ti-calendar"></i> Minggu, 21 Jun 2026 · 08:00–09:00 · <span class="font-semibold text-gray-700 dark:text-gray-300">Rp 175.000</span></div>
+      </div>
+      <button class="px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition" onclick="toast('Booking diulang')"><i class="ti ti-refresh"></i> Booking Lagi</button>
+    </div>
+  </div>
+</main>
+
+<script src="app.js"></script>
+<script>
+  document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(x => { x.className='tab-btn px-4 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-600'; });
+    b.className='tab-btn px-4 py-3 font-semibold border-b-2 border-brand-600 text-brand-600';
+    document.getElementById('upcoming').classList.toggle('hidden', b.dataset.tab!=='upcoming');
+    document.getElementById('past').classList.toggle('hidden', b.dataset.tab!=='past');
+  });
+</script>
+</body>
+</html>

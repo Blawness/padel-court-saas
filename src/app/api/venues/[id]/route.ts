@@ -1,0 +1,81 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { asc, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { courts, venues } from "@/db/schema";
+import { requireUser } from "@/lib/auth";
+import { requireActiveSubscription } from "@/lib/subscription";
+import { apiError } from "@/lib/utils";
+
+type Ctx = { params: Promise<{ id: string }> };
+
+/** GET /api/venues/{id} — public. Venue detail with its active courts. */
+export async function GET(_req: NextRequest, { params }: Ctx) {
+  try {
+    const { id } = await params;
+    const venue = await db.query.venues.findFirst({
+      where: eq(venues.id, id),
+      with: {
+        courts: { where: eq(courts.isActive, true), orderBy: asc(courts.name) },
+      },
+    });
+    if (!venue) return NextResponse.json({ error: "Venue tidak ditemukan." }, { status: 404 });
+    return NextResponse.json({ venue });
+  } catch (err) {
+    return apiError(err);
+  }
+}
+
+const updateSchema = z.object({
+  name: z.string().min(2).optional(),
+  city: z.string().min(2).optional(),
+  address: z.string().min(4).optional(),
+  openTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  closeTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  photos: z.array(z.string().url()).optional(),
+});
+
+/** Loads a venue and asserts the caller owns it (super_admin bypasses ownership). */
+async function assertOwnership(venueId: string) {
+  const user = await requireUser("venue_owner", "super_admin");
+  const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
+  if (!venue) {
+    return { error: NextResponse.json({ error: "Venue tidak ditemukan." }, { status: 404 }) };
+  }
+  if (user.role !== "super_admin") {
+    if (venue.ownerId !== user.id) {
+      return { error: NextResponse.json({ error: "Bukan venue kamu." }, { status: 403 }) };
+    }
+    await requireActiveSubscription(user.id);
+  }
+  return { venue };
+}
+
+/** PUT /api/venues/{id} — owner of the venue. */
+export async function PUT(req: NextRequest, { params }: Ctx) {
+  try {
+    const { id } = await params;
+    const check = await assertOwnership(id);
+    if (check.error) return check.error;
+
+    const data = updateSchema.parse(await req.json());
+    const [venue] = await db.update(venues).set(data).where(eq(venues.id, id)).returning();
+    return NextResponse.json({ venue });
+  } catch (err) {
+    return apiError(err);
+  }
+}
+
+/** DELETE /api/venues/{id} — owner of the venue. Cascades to courts and bookings. */
+export async function DELETE(_req: NextRequest, { params }: Ctx) {
+  try {
+    const { id } = await params;
+    const check = await assertOwnership(id);
+    if (check.error) return check.error;
+
+    await db.delete(venues).where(eq(venues.id, id));
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return apiError(err);
+  }
+}

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SuperAdmin — Padel Booking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.38.0/tabler-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Plus Jakarta Sans','system-ui','sans-serif'], display:['Sora','Plus Jakarta Sans','sans-serif'] }, colors:{ brand:{50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d'}, teal:{400:'#2dd4bf',500:'#14b8a6',600:'#0d9488'} } } } }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-50 dark:bg-[#0a0f0d] text-gray-900 dark:text-gray-100 transition-colors">
+<div id="bar"></div><div id="trail"></div>
+
+<div class="shell">
+  <aside class="side bg-gray-900 text-gray-300 border-r border-white/10 p-5">
+    <a href="index.html" class="flex items-center gap-2.5 mb-8"><div class="w-10 h-10 rounded-xl aurora flex items-center justify-center"><i class="ti ti-paddle text-white text-xl"></i></div><span class="text-xl font-extrabold font-display text-white">Padel<span class="text-brand-400">Admin</span></span></a>
+    <div class="mb-2 text-xs text-gray-500 font-semibold uppercase tracking-wider">Platform</div>
+    <nav class="space-y-1">
+      <a href="admin.html" class="nav-item active"><i class="ti ti-layout-dashboard"></i> Overview</a>
+      <a href="admin.html" class="nav-item"><i class="ti ti-users"></i> Owner Venue</a>
+      <a href="admin.html" class="nav-item"><i class="ti ti-receipt"></i> Subscription Plan</a>
+      <a href="admin.html" class="nav-item"><i class="ti ti-wallet"></i> Payout & Refund</a>
+      <a href="admin.html" class="nav-item"><i class="ti ti-chart-arrows"></i> Analytics</a>
+      <a href="admin.html" class="nav-item"><i class="ti ti-settings"></i> Settings</a>
+    </nav>
+    <a href="index.html" class="nav-item mt-6 border-t border-white/10 pt-4"><i class="ti ti-arrow-back-up"></i> Ke Situs Publik</a>
+  </aside>
+
+  <div class="min-w-0">
+    <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-[#0a0f0d]/80 border-b border-gray-100 dark:border-white/10">
+      <div class="flex items-center justify-between px-6 py-4">
+        <div><h1 class="text-xl font-extrabold font-display">Platform Overview</h1><p class="text-xs text-gray-400">Kesehatan platform & metrik bisnis real-time.</p></div>
+        <div class="flex items-center gap-3">
+          <span class="chip chip-green"><span class="w-1.5 h-1.5 rounded-full bg-green-500 pdot"></span> Live</span>
+          <div id="themeSwitch" class="switch" title="Dark mode"><div class="knob"></div></div>
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-teal-500 grid place-items-center text-white font-bold">SA</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="p-6 space-y-6">
+      <!-- platform KPIs -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="reveal lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+          <div class="flex items-center justify-between"><span class="text-sm text-gray-500 dark:text-gray-400">MRR</span><span class="w-9 h-9 rounded-lg bg-brand-100 dark:bg-brand-500/15 grid place-items-center text-brand-600"><i class="ti ti-currency-rupiah"></i></span></div>
+          <div class="text-2xl font-extrabold font-display mt-2">Rp 18,4jt</div>
+          <div class="text-xs text-brand-600 dark:text-brand-400 mt-1">▲ 12% MoM</div>
+        </div>
+        <div class="reveal d1 lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+          <div class="flex items-center justify-between"><span class="text-sm text-gray-500 dark:text-gray-400">Venue Aktif</span><span class="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-500/15 grid place-items-center text-blue-600"><i class="ti ti-building-store"></i></span></div>
+          <div class="text-2xl font-extrabold font-display mt-2">142</div>
+          <div class="text-xs text-gray-400 mt-1">+9 bulan ini</div>
+        </div>
+        <div class="reveal d2 lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+          <div class="flex items-center justify-between"><span class="text-sm text-gray-500 dark:text-gray-400">Trial → Paid</span><span class="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-500/15 grid place-items-center text-purple-600"><i class="ti ti-trending-up"></i></span></div>
+          <div class="text-2xl font-extrabold font-display mt-2">34%</div>
+          <div class="text-xs text-brand-600 dark:text-brand-400 mt-1">▲ 4% vs target</div>
+        </div>
+        <div class="reveal d3 lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+          <div class="flex items-center justify-between"><span class="text-sm text-gray-500 dark:text-gray-400">Total Booking</span><span class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-500/15 grid place-items-center text-amber-600"><i class="ti ti-calendar-event"></i></span></div>
+          <div class="text-2xl font-extrabold font-display mt-2">25.4k</div>
+          <div class="text-xs text-gray-400 mt-1">Bulan ini</div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- MRR growth -->
+        <div class="reveal lg:col-span-2 bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+          <div class="flex items-center justify-between mb-4"><h2 class="font-bold">Pertumbuhan MRR</h2><span class="text-xs text-gray-400">6 bulan terakhir</span></div>
+          <div class="flex items-end gap-3 h-56">
+            <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bar bg-brand-200 dark:bg-brand-500/30" style="height:42%"></div><span class="text-[10px] text-gray-400">Feb</span></div>
+            <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bar bg-brand-300 dark:bg-brand-500/50" style="height:55%"></div><span class="text-[10px] text-gray-400">Mar</span></div>
+            <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bar bg-brand-400 dark:bg-brand-500/70" style="height:63%"></div><span class="text-[10px] text-gray-400">Apr</span></div>
+            <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bar bg-brand-500" style="height:78%"></div><span class="text-[10px] text-gray-400">Mei</span></div>
+            <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bar bg-brand-500" style="height:88%"></div><span class="text-[10px] text-gray-400">Jun</span></div>
+            <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bar bg-teal-500" style="height:100%"></div><span class="text-[10px] text-gray-400">Jul</span></div>
+          </div>
+        </div>
+        <!-- plan distribution -->
+        <div class="reveal d1 bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+          <h2 class="font-bold mb-4">Distribusi Plan</h2>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-sm"><span>Basic</span><span class="font-semibold">58</span></div>
+            <div class="h-2 rounded-full bg-gray-100 dark:bg-white/10"><div class="h-full rounded-full bg-brand-500" style="width:41%"></div></div>
+            <div class="flex items-center justify-between text-sm"><span>Pro</span><span class="font-semibold">71</span></div>
+            <div class="h-2 rounded-full bg-gray-100 dark:bg-white/10"><div class="h-full rounded-full bg-teal-500" style="width:50%"></div></div>
+            <div class="flex items-center justify-between text-sm"><span>Enterprise</span><span class="font-semibold">13</span></div>
+            <div class="h-2 rounded-full bg-gray-100 dark:bg-white/10"><div class="h-full rounded-full bg-amber-500" style="width:9%"></div></div>
+            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between text-sm"><span class="text-gray-500 dark:text-gray-400">Dalam trial</span><span class="font-semibold text-amber-600">24</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- owner management -->
+      <div class="reveal bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
+        <div class="flex items-center justify-between p-5 border-b border-gray-100 dark:border-white/10">
+          <h2 class="font-bold">Verifikasi Owner Baru</h2>
+          <button class="text-sm text-brand-600 font-semibold" onclick="toast('Lihat semua owner')">Kelola</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="tbl">
+            <thead><tr><th>Owner</th><th>Venue</th><th>Kota</th><th>Status</th><th>Join</th><th>Aksi</th></tr></thead>
+            <tbody>
+              <tr><td class="flex items-center gap-2"><img src="https://i.pravatar.cc/40?img=5" class="w-7 h-7 rounded-full">Agus P.</td><td>Padel Menteng</td><td>Jakarta</td><td><span class="chip chip-amber">Trial</span></td><td>2 jam lalu</td><td class="flex gap-2"><button class="text-green-600 text-sm font-semibold" onclick="toast('Owner disetujui')">Setujui</button><button class="text-red-600 text-sm font-semibold" onclick="toast('Owner ditolak')">Tolak</button></td></tr>
+              <tr><td class="flex items-center gap-2"><img src="https://i.pravatar.cc/40?img=8" class="w-7 h-7 rounded-full">Sinta M.</td><td>Court Sinta</td><td>Bandung</td><td><span class="chip chip-amber">Trial</span></td><td>5 jam lalu</td><td class="flex gap-2"><button class="text-green-600 text-sm font-semibold" onclick="toast('Owner disetujui')">Setujui</button><button class="text-red-600 text-sm font-semibold" onclick="toast('Owner ditolak')">Tolak</button></td></tr>
+              <tr><td class="flex items-center gap-2"><img src="https://i.pravatar.cc/40?img=12" class="w-7 h-7 rounded-full">Hendra K.</td><td>Hendra Padel</td><td>Surabaya</td><td><span class="chip chip-green">Aktif</span></td><td>2 hari lalu</td><td class="flex gap-2"><button class="text-brand-600 text-sm font-semibold" onclick="toast('Detail owner')">Detail</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- subscription plans -->
+      <div class="reveal d1">
+        <div class="flex items-center justify-between mb-4"><h2 class="font-bold text-lg">Subscription Plan</h2><button onclick="toast('Tambah plan')" class="px-4 py-2.5 bg-brand-600 text-white rounded-xl font-semibold text-sm hover:bg-brand-700 transition flex items-center gap-2"><i class="ti ti-plus"></i> Plan</button></div>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+            <div class="font-bold">Basic</div><div class="text-2xl font-extrabold font-display mt-2 text-brand-600 dark:text-brand-400">Rp 99.000<span class="text-sm font-normal text-gray-400">/bln</span></div>
+            <ul class="text-sm text-gray-500 dark:text-gray-400 mt-3 space-y-1"><li>• 1 venue · 4 court</li><li>• Booking real-time</li><li>• Laporan dasar</li></ul>
+            <button class="mt-4 w-full py-2 rounded-xl border border-gray-200 dark:border-white/10 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition" onclick="toast('Edit plan')">Edit</button>
+          </div>
+          <div class="bg-gradient-to-br from-brand-500 to-teal-500 text-white rounded-2xl p-5">
+            <div class="font-bold">Pro <span class="chip chip-gray ml-1">Populer</span></div><div class="text-2xl font-extrabold font-display mt-2">Rp 349.000<span class="text-sm font-normal text-white/70">/bln</span></div>
+            <ul class="text-sm mt-3 space-y-1 opacity-95"><li>• Hingga 5 venue</li><li>• Unlimited court</li><li>• Analitik lengkap</li></ul>
+            <button class="mt-4 w-full py-2 rounded-xl bg-white text-brand-700 font-semibold text-sm hover:bg-gray-100 transition" onclick="toast('Edit plan')">Edit</button>
+          </div>
+          <div class="bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+            <div class="font-bold">Enterprise</div><div class="text-2xl font-extrabold font-display mt-2 text-brand-600 dark:text-brand-400">Custom</div>
+            <ul class="text-sm text-gray-500 dark:text-gray-400 mt-3 space-y-1"><li>• Unlimited venue</li><li>• White-label</li><li>• API akses</li></ul>
+            <button class="mt-4 w-full py-2 rounded-xl border border-gray-200 dark:border-white/10 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition" onclick="toast('Edit plan')">Edit</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

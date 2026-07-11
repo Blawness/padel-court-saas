@@ -1,0 +1,145 @@
+/* ============================================================
+   Padel Booking — Shared Design System
+   Used by all mockup pages. Loaded after Tailwind CDN.
+   ============================================================ */
+
+:root { color-scheme: light dark; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: #ffffff;
+}
+.dark body { background: #0a0f0d; }
+
+.font-display { font-family: 'Sora', sans-serif; }
+
+/* ---------- scroll progress + cursor trail ---------- */
+#bar {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 100;
+  background: linear-gradient(90deg, #22c55e, #14b8a6);
+  box-shadow: 0 0 12px rgba(34,197,94,.6);
+}
+#trail {
+  position: fixed; width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid rgba(34,197,94,.5); pointer-events: none; z-index: 90;
+  transform: translate(-50%, -50%); transition: width .2s, height .2s, background .2s;
+  mix-blend-mode: difference;
+}
+
+/* ---------- gradients & blobs ---------- */
+@keyframes aurora { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+.aurora {
+  background: linear-gradient(120deg, #22c55e, #14b8a6, #a3e635, #22c55e);
+  background-size: 300% 300%; animation: aurora 14s ease infinite;
+}
+@keyframes blob { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-40px) scale(1.1)} 66%{transform:translate(-20px,30px) scale(.95)} }
+.blob { animation: blob 12s ease-in-out infinite; }
+.blob2 { animation: blob 16s ease-in-out infinite reverse; }
+
+@keyframes shift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+.gtext {
+  background: linear-gradient(90deg, #16a34a, #0d9488, #84cc16, #16a34a);
+  background-size: 250% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: shift 6s ease infinite;
+}
+
+/* ---------- reveal-on-scroll ---------- */
+.reveal { opacity: 0; transform: translateY(34px); transition: opacity .8s cubic-bezier(.22,1,.36,1), transform .8s cubic-bezier(.22,1,.36,1); }
+.reveal.in { opacity: 1; transform: none; }
+.reveal.d1 { transition-delay: .1s } .reveal.d2 { transition-delay: .2s }
+.reveal.d3 { transition-delay: .3s } .reveal.d4 { transition-delay: .4s }
+
+/* ---------- card lift ---------- */
+.lift { transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease, border-color .4s; }
+.lift:hover { transform: translateY(-10px); box-shadow: 0 30px 60px -18px rgba(0,0,0,.22); }
+
+/* ---------- animated conic border ---------- */
+@keyframes borderRun { to { --angle: 360deg } }
+@property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+.glow-border { position: relative; }
+.glow-border::before {
+  content: ""; position: absolute; inset: -1.5px; border-radius: inherit; padding: 1.5px;
+  background: conic-gradient(from var(--angle), transparent 60%, #22c55e, #14b8a6, transparent);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; animation: borderRun 4s linear infinite;
+}
+
+/* ---------- pulse dot ---------- */
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)} 70%{box-shadow:0 0 0 16px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
+.pdot { animation: pulse 2.2s infinite; }
+
+/* ---------- marquee ---------- */
+@keyframes marq { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+.marq { display: flex; width: max-content; animation: marq 28s linear infinite; }
+.marquee-wrap:hover .marq { animation-play-state: paused; }
+
+/* ---------- shimmer button ---------- */
+.shimmer { position: relative; overflow: hidden; }
+.shimmer::after {
+  content: ""; position: absolute; top: 0; left: -120%; width: 60%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,.45), transparent);
+  transform: skewX(-20deg); animation: sh 3.5s infinite;
+}
+@keyframes sh { 0%{left:-120%} 45%{left:140%} 100%{left:140%} }
+
+/* ---------- dots overlay ---------- */
+.dots { background-image: radial-gradient(rgba(255,255,255,.10) 1px, transparent 1px); background-size: 26px 26px; }
+
+/* ---------- theme switch ---------- */
+.switch { width: 52px; height: 28px; border-radius: 999px; background: #cbd5e1; position: relative; cursor: pointer; transition: .3s; }
+.dark .switch { background: #334155; }
+.switch.on { background: #16a34a; }
+.switch .knob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: .3s; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.switch.on .knob { left: 27px; }
+
+/* ---------- app shell (dashboard) ---------- */
+.shell { display: grid; grid-template-columns: 264px 1fr; min-height: 100vh; }
+@media (max-width: 1023px) { .shell { grid-template-columns: 1fr; } .side { display: none; } }
+.side { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.nav-item { display: flex; align-items: center; gap: .65rem; padding: .65rem .9rem; border-radius: .75rem; color: #64748b; font-weight: 600; font-size: .9rem; transition: .2s; }
+.dark .nav-item { color: #94a3b8; }
+.nav-item:hover { background: rgba(34,197,94,.08); color: #16a34a; }
+.nav-item.active { background: rgba(34,197,94,.14); color: #16a34a; }
+.dark .nav-item.active { background: rgba(34,197,94,.18); }
+
+/* ---------- generic chips / pills ---------- */
+.chip { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .65rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.chip-green { background: #dcfce7; color: #15803d; } .dark .chip-green { background: rgba(34,197,94,.18); color: #86efac; }
+.chip-blue  { background: #dbeafe; color: #1d4ed8; } .dark .chip-blue  { background: rgba(59,130,246,.18); color: #93c5fd; }
+.chip-amber { background: #fef3c7; color: #b45309; } .dark .chip-amber { background: rgba(245,158,11,.18); color: #fcd34d; }
+.chip-gray  { background: #f1f5f9; color: #475569; } .dark .chip-gray  { background: rgba(255,255,255,.08); color: #cbd5e1; }
+.chip-red   { background: #fee2e2; color: #b91c1c; } .dark .chip-red   { background: rgba(239,68,68,.18); color: #fca5a5; }
+
+/* ---------- slot grid (booking calendar) ---------- */
+.slot { padding: .55rem; text-align: center; border-radius: .75rem; font-size: .82rem; font-weight: 600; border: 1px solid #e2e8f0; background: #fff; color: #334155; cursor: pointer; transition: .2s; }
+.dark .slot { border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.04); color: #cbd5e1; }
+.slot:hover:not(.slot-taken) { border-color: #22c55e; color: #16a34a; }
+.slot-free { background: #f0fdf4; } .dark .slot-free { background: rgba(34,197,94,.08); }
+.slot-sel { background: #16a34a !important; color: #fff !important; border-color: #16a34a !important; }
+.slot-taken { background: #f1f5f9; color: #cbd5e1; text-decoration: line-through; cursor: not-allowed; } .dark .slot-taken { background: rgba(255,255,255,.04); }
+.slot-held { background: #fef3c7; color: #b45309; border-color: #fcd34d; } .dark .slot-held { background: rgba(245,158,11,.15); }
+
+/* ---------- table ---------- */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; padding: .75rem 1rem; border-bottom: 1px solid #e2e8f0; }
+.dark .tbl th { border-color: rgba(255,255,255,.1); }
+.tbl td { padding: .85rem 1rem; font-size: .88rem; border-bottom: 1px solid #f1f5f9; }
+.dark .tbl td { border-color: rgba(255,255,255,.06); }
+.tbl tbody tr { transition: .15s; }
+.tbl tbody tr:hover { background: rgba(34,197,94,.05); }
+
+/* ---------- form inputs ---------- */
+.input { width: 100%; padding: .7rem .9rem; border-radius: .75rem; border: 1px solid #e2e8f0; background: #fff; font-size: .9rem; transition: .2s; }
+.dark .input { border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.04); color: #e2e8f0; }
+.input:focus { outline: none; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.15); }
+
+/* ---------- toast ---------- */
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(120%); z-index: 200; transition: transform .4s cubic-bezier(.22,1,.36,1); }
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ---------- bar chart helper ---------- */
+.bar { border-radius: 6px 6px 0 0; transition: height .8s cubic-bezier(.22,1,.36,1); }
+
+/* utility */
+.hide-scroll::-webkit-scrollbar { height: 0; }

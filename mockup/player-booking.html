@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking — Padel Central</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.38.0/tabler-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Plus Jakarta Sans','system-ui','sans-serif'], display:['Sora','Plus Jakarta Sans','sans-serif'] }, colors:{ brand:{50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d'}, teal:{400:'#2dd4bf',500:'#14b8a6',600:'#0d9488'} } } } }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-50 dark:bg-[#0a0f0d] text-gray-900 dark:text-gray-100 transition-colors">
+<div id="bar"></div><div id="trail"></div>
+
+<!-- APP HEADER -->
+<header class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-[#0a0f0d]/80 border-b border-gray-100 dark:border-white/10">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="player-venues.html" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition"><i class="ti ti-arrow-left"></i></a>
+      <span class="font-bold">Booking Lapangan</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="player-profile.html" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition"><i class="ti ti-user text-gray-600 dark:text-gray-300"></i></a>
+      <div id="themeSwitch" class="switch" title="Dark mode"><div class="knob"></div></div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+  <!-- venue header -->
+  <div class="reveal bg-white dark:bg-[#111714] rounded-3xl border border-gray-100 dark:border-white/10 overflow-hidden">
+    <div class="h-40 relative">
+      <img src="https://images.unsplash.com/photo-1554068950-cb1da4204267?w=1000&h=400&fit=crop&q=80" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+      <div class="absolute bottom-4 left-5 text-white">
+        <h1 class="text-2xl font-extrabold font-display drop-shadow">Padel Central</h1>
+        <div class="flex items-center gap-3 text-sm mt-1"><span><i class="ti ti-map-pin"></i> Jakarta Pusat</span><span class="chip chip-amber">★ 4.9</span></div>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 p-5 text-sm">
+      <span class="chip chip-green"><span class="w-1.5 h-1.5 rounded-full bg-green-500 pdot"></span> Buka 06:00–23:00</span>
+      <span class="chip chip-blue">QRIS</span><span class="chip chip-blue">GoPay</span><span class="chip chip-gray">4 Court</span><span class="chip chip-amber">AC</span>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6 mt-6">
+    <!-- left: calendar + slots -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- court tabs -->
+      <div class="reveal bg-white dark:bg-[#111714] rounded-3xl border border-gray-100 dark:border-white/10 p-5">
+        <h2 class="font-bold mb-3">Pilih Court</h2>
+        <div class="flex gap-2 overflow-x-auto hide-scroll" id="courtTabs">
+          <button class="court-tab px-4 py-2 rounded-xl bg-brand-600 text-white font-semibold text-sm whitespace-nowrap" data-court="1">Court 1</button>
+          <button class="court-tab px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm whitespace-nowrap" data-court="2">Court 2</button>
+          <button class="court-tab px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm whitespace-nowrap" data-court="3">Court 3</button>
+          <button class="court-tab px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm whitespace-nowrap" data-court="4">Court 4</button>
+        </div>
+      </div>
+
+      <!-- date selector -->
+      <div class="reveal d1 bg-white dark:bg-[#111714] rounded-3xl border border-gray-100 dark:border-white/10 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold">Pilih Tanggal</h2>
+          <div class="flex gap-1 text-gray-400"><button class="w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"><i class="ti ti-chevron-left"></i></button><button class="w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"><i class="ti ti-chevron-right"></i></button></div>
+        </div>
+        <div class="flex gap-2 overflow-x-auto hide-scroll" id="dateTabs">
+          <button class="date-tab shrink-0 w-16 py-2 rounded-xl bg-brand-600 text-white text-center" data-date="Sab"><div class="text-xs opacity-80">18 Jul</div><div class="font-bold">Sab</div></button>
+          <button class="date-tab shrink-0 w-16 py-2 rounded-xl bg-gray-100 dark:bg-white/5 text-center" data-date="Min"><div class="text-xs opacity-80">19 Jul</div><div class="font-bold">Min</div></button>
+          <button class="date-tab shrink-0 w-16 py-2 rounded-xl bg-gray-100 dark:bg-white/5 text-center" data-date="Sen"><div class="text-xs opacity-80">20 Jul</div><div class="font-bold">Sen</div></button>
+          <button class="date-tab shrink-0 w-16 py-2 rounded-xl bg-gray-100 dark:bg-white/5 text-center" data-date="Sel"><div class="text-xs opacity-80">21 Jul</div><div class="font-bold">Sel</div></button>
+          <button class="date-tab shrink-0 w-16 py-2 rounded-xl bg-gray-100 dark:bg-white/5 text-center" data-date="Rab"><div class="text-xs opacity-80">22 Jul</div><div class="font-bold">Rab</div></button>
+          <button class="date-tab shrink-0 w-16 py-2 rounded-xl bg-gray-100 dark:bg-white/5 text-center" data-date="Kam"><div class="text-xs opacity-80">23 Jul</div><div class="font-bold">Kam</div></button>
+        </div>
+      </div>
+
+      <!-- slot grid -->
+      <div class="reveal d2 bg-white dark:bg-[#111714] rounded-3xl border border-gray-100 dark:border-white/10 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold">Slot Tersedia — <span id="slotCtx">Court 1 · Sab 18 Jul</span></h2>
+          <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded slot slot-free inline-block"></span> Kosong</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded slot slot-sel inline-block"></span> Dipilih</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded slot slot-taken inline-block"></span> Terisi</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 sm:grid-cols-4 gap-2" id="slotGrid"></div>
+        <p class="mt-4 text-xs text-gray-400"><i class="ti ti-info-circle"></i> Slot otomatis terkunci 10 menit setelah dipilih, menunggu pembayaran.</p>
+      </div>
+    </div>
+
+    <!-- right: summary -->
+    <div class="lg:col-span-1">
+      <div class="reveal d1 sticky top-24 bg-white dark:bg-[#111714] rounded-3xl border border-gray-100 dark:border-white/10 p-6 shadow-sm">
+        <h3 class="font-bold mb-4">Ringkasan Booking</h3>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Venue</span><span class="font-semibold">Padel Central</span></div>
+          <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Court</span><span class="font-semibold" id="sumCourt">Court 1</span></div>
+          <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Tanggal</span><span class="font-semibold" id="sumDate">Sab, 18 Jul</span></div>
+          <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Jam</span><span class="font-semibold" id="sumTime">—</span></div>
+          <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Durasi</span><span class="font-semibold">60 menit</span></div>
+        </div>
+        <hr class="my-4 border-gray-100 dark:border-white/10">
+        <div class="flex justify-between items-end"><div><div class="text-xs text-gray-500 dark:text-gray-400">Total</div><div class="text-2xl font-extrabold text-brand-600 dark:text-brand-400" id="sumTotal">Rp 0</div></div></div>
+        <button id="payBtn" class="mt-5 w-full py-3.5 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition shadow-lg shadow-brand-500/30 disabled:opacity-40 disabled:cursor-not-allowed" disabled onclick="openPay()">Pilih Slot Dulu</button>
+        <p class="mt-3 text-xs text-center text-gray-400"><i class="ti ti-lock"></i> Pembayaran dienkripsi · Midtrans</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- PAYMENT MODAL (Midtrans Snap style) -->
+<div id="payModal" class="fixed inset-0 z-[80] hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closePay()"></div>
+  <div class="absolute inset-x-0 bottom-0 sm:inset-0 sm:m-auto sm:h-fit sm:max-w-md bg-white dark:bg-[#111714] rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto reveal">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-2"><div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-teal-500 flex items-center justify-center text-white"><i class="ti ti-credit-card"></i></div><h3 class="font-bold">Pembayaran</h3></div>
+      <button onclick="closePay()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 mb-5">
+      <div class="flex justify-between text-sm"><span class="text-gray-500 dark:text-gray-400">Padel Central · <span id="mCourt">Court 1</span></span><span class="font-semibold" id="mTime">—</span></div>
+      <div class="flex justify-between items-end mt-2"><span class="text-xs text-gray-500 dark:text-gray-400">Total bayar</span><span class="text-2xl font-extrabold text-brand-600 dark:text-brand-400" id="mTotal">Rp 150.000</span></div>
+    </div>
+    <p class="text-sm font-semibold mb-3">Pilih metode pembayaran</p>
+    <div class="space-y-2" id="payMethods">
+      <button class="pay-method w-full flex items-center gap-3 p-3 rounded-xl border-2 border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-left" data-m="QRIS"><span class="w-10 h-10 rounded-lg bg-white dark:bg-white/10 grid place-items-center font-bold text-xs">QRIS</span><span class="font-semibold">QRIS</span><span class="ml-auto chip chip-green">Instan</span></button>
+      <button class="pay-method w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 text-left" data-m="GoPay"><span class="w-10 h-10 rounded-lg bg-white dark:bg-white/10 grid place-items-center"><i class="ti ti-wallet text-blue-500"></i></span><span class="font-semibold">GoPay / OVO / DANA</span></button>
+      <button class="pay-method w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 text-left" data-m="VA"><span class="w-10 h-10 rounded-lg bg-white dark:bg-white/10 grid place-items-center"><i class="ti ti-building-bank"></i></span><span class="font-semibold">Virtual Account</span></button>
+      <button class="pay-method w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 text-left" data-m="Kartu"><span class="w-10 h-10 rounded-lg bg-white dark:bg-white/10 grid place-items-center"><i class="ti ti-credit-card"></i></span><span class="font-semibold">Kartu Kredit</span></button>
+    </div>
+    <button class="mt-5 w-full py-3.5 shimmer bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition" onclick="processPay()">Bayar Sekarang</button>
+  </div>
+</div>
+
+<!-- CONFIRMATION -->
+<div id="doneModal" class="fixed inset-0 z-[90] hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="absolute inset-0 m-auto w-fit h-fit">
+    <div class="bg-white dark:bg-[#111714] rounded-3xl p-8 max-w-sm text-center shadow-2xl reveal">
+      <div class="w-20 h-20 mx-auto rounded-full bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center mb-5"><i class="ti ti-circle-check text-5xl text-brand-600 dark:text-brand-400"></i></div>
+      <h3 class="text-2xl font-extrabold font-display">Booking Berhasil!</h3>
+      <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">Pembayaran lunas. E-ticket sudah dikirim ke email & WhatsApp kamu.</p>
+      <div class="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 mt-5 text-left text-sm space-y-2">
+        <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Booking ID</span><span class="font-mono font-semibold">PB-7F3A9C</span></div>
+        <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Venue</span><span class="font-semibold">Padel Central</span></div>
+        <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Waktu</span><span class="font-semibold" id="doneTime">—</span></div>
+      </div>
+      <div class="flex gap-2 mt-6">
+        <a href="player-profile.html" class="flex-1 py-3 bg-brand-600 text-white rounded-xl font-semibold hover:bg-brand-700 transition">Lihat Booking</a>
+        <button onclick="closeDone()" class="flex-1 py-3 border-2 border-gray-200 dark:border-white/10 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const PRICE = 150000;
+  let sel = { court: '1', date: 'Sab', time: null };
+
+  // build slots
+  const grid = document.getElementById('slotGrid');
+  const times = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+  const taken = new Set(['07:00','10:00','14:00','18:00','20:00']);
+  const held = new Set(['09:00']);
+  times.forEach(t => {
+    const d = document.createElement('div');
+    d.className = 'slot ' + (taken.has(t) ? 'slot-taken' : held.has(t) ? 'slot-held' : 'slot-free');
+    d.textContent = t;
+    if (!taken.has(t)) d.onclick = () => chooseSlot(t, d);
+    grid.appendChild(d);
+  });
+
+  function chooseSlot(t, el) {
+    document.querySelectorAll('#slotGrid .slot-sel').forEach(s => { s.classList.remove('slot-sel'); s.classList.add('slot-free'); });
+    el.classList.remove('slot-free'); el.classList.add('slot-sel');
+    sel.time = t;
+    document.getElementById('sumTime').textContent = t + ' – ' + nextHour(t);
+    document.getElementById('sumTotal').textContent = 'Rp ' + PRICE.toLocaleString('id-ID');
+    const btn = document.getElementById('payBtn');
+    btn.disabled = false; btn.textContent = 'Lanjut Bayar →'; btn.onclick = openPay;
+    document.getElementById('mTime').textContent = t + ' – ' + nextHour(t);
+    document.getElementById('mTotal').textContent = 'Rp ' + PRICE.toLocaleString('id-ID');
+    document.getElementById('doneTime').textContent = 'Sab, 18 Jul · ' + t;
+    toast('Slot ' + t + ' dipilih');
+  }
+  function nextHour(t){ const [h]=t.split(':'); const n=(+h+1).toString().padStart(2,'0'); return n+':00'; }
+
+  // court tabs
+  document.querySelectorAll('.court-tab').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.court-tab').forEach(x => { x.className='court-tab px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm whitespace-nowrap'; });
+    b.className='court-tab px-4 py-2 rounded-xl bg-brand-600 text-white font-semibold text-sm whitespace-nowrap';
+    sel.court = b.dataset.court; document.getElementById('sumCourt').textContent='Court '+sel.court; document.getElementById('slotCtx').textContent='Court '+sel.court+' · '+sel.date+' 18 Jul'; document.getElementById('mCourt').textContent='Court '+sel.court;
+  });
+  // date tabs
+  document.querySelectorAll('.date-tab').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.date-tab').forEach(x => { x.className='date-tab shrink-0 w-16 py-2 rounded-xl bg-gray-100 dark:bg-white/5 text-center'; });
+    b.className='date-tab shrink-0 w-16 py-2 rounded-xl bg-brand-600 text-white text-center';
+    sel.date = b.dataset.date; document.getElementById('sumDate').textContent=b.querySelector('.font-bold').textContent+', 18 Jul'; document.getElementById('slotCtx').textContent='Court '+sel.court+' · '+sel.date+' 18 Jul';
+  });
+
+  // payment methods
+  document.querySelectorAll('.pay-method').forEach(m => m.onclick = () => {
+    document.querySelectorAll('.pay-method').forEach(x => x.className='pay-method w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 text-left');
+    m.className='pay-method w-full flex items-center gap-3 p-3 rounded-xl border-2 border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-left';
+  });
+
+  function openPay(){ document.getElementById('payModal').classList.remove('hidden'); }
+  function closePay(){ document.getElementById('payModal').classList.add('hidden'); }
+  function processPay(){
+    closePay();
+    const b=document.getElementById('payBtn'); b.disabled=true; b.innerHTML='<i class="ti ti-loader animate-spin"></i> Memproses…';
+    setTimeout(()=>{ document.getElementById('doneModal').classList.remove('hidden'); }, 1400);
+  }
+  function closeDone(){ document.getElementById('doneModal').classList.add('hidden'); }
+</script>
+</body>
+</html>

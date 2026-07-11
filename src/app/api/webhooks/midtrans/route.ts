@@ -1,0 +1,122 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { bookings, payments, subscriptions } from "@/db/schema";
+import { mapTransactionStatus, verifySignature, type MidtransNotification } from "@/lib/midtrans";
+import { broadcastSlotChange } from "@/lib/realtime";
+import { sendBookingConfirmation } from "@/lib/email";
+import { TRIAL_DAYS } from "@/lib/env";
+
+/**
+ * POST /api/webhooks/midtrans — payment notification.
+ * Verifies sha512(order_id + status_code + gross_amount + server_key) before touching anything.
+ * Handles both booking payments and subscription payments (same Payment table).
+ */
+export async function POST(req: NextRequest) {
+  let notification: MidtransNotification;
+  try {
+    notification = (await req.json()) as MidtransNotification;
+  } catch {
+    return NextResponse.json({ error: "Body bukan JSON valid." }, { status: 400 });
+  }
+
+  if (!notification.order_id) {
+    return NextResponse.json({ error: "order_id wajib ada." }, { status: 400 });
+  }
+
+  if (!verifySignature(notification)) {
+    console.warn(`[midtrans] signature tidak valid untuk order ${notification.order_id}`);
+    return NextResponse.json({ error: "Signature tidak valid." }, { status: 403 });
+  }
+
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.midtransOrderId, notification.order_id),
+    with: {
+      booking: { with: { court: { with: { venue: true } }, player: true } },
+      subscription: true,
+    },
+  });
+  if (!payment) {
+    return NextResponse.json({ error: "Pembayaran tidak ditemukan." }, { status: 404 });
+  }
+
+  const result = mapTransactionStatus(notification);
+
+  // Midtrans may retry a notification; never process the same success twice.
+  if (payment.status === "success" && result === "success") {
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
+
+  await db
+    .update(payments)
+    .set({
+      status: result,
+      paymentMethod: notification.payment_type ?? payment.paymentMethod,
+      paidAt: result === "success" ? new Date() : null,
+    })
+    .where(eq(payments.id, payment.id));
+
+  // --- Booking payment ---
+  if (payment.booking) {
+    const booking = payment.booking;
+
+    if (result === "success") {
+      // Only a still-held booking can be confirmed; if the hold already expired the
+      // slot may belong to someone else now, so we leave it and flag for manual refund.
+      if (booking.status === "pending_payment") {
+        await db
+          .update(bookings)
+          .set({ status: "confirmed", holdExpiresAt: null })
+          .where(eq(bookings.id, booking.id));
+
+        await broadcastSlotChange({
+          courtId: booking.courtId,
+          startTime: booking.startTime.toISOString(),
+          state: "taken",
+        });
+
+        if (booking.player) {
+          await sendBookingConfirmation({
+            to: booking.player.email,
+            playerName: booking.player.fullName,
+            venueName: booking.court.venue.name,
+            courtName: booking.court.name,
+            start: booking.startTime,
+            end: booking.endTime,
+            amount: booking.totalPrice,
+          });
+        }
+      } else {
+        console.warn(
+          `[midtrans] pembayaran sukses untuk booking ${booking.id} berstatus ${booking.status} — perlu refund manual.`,
+        );
+      }
+    } else if (result === "failed" && booking.status === "pending_payment") {
+      // Failed / cancelled / expired payment releases the slot back to available.
+      await db.update(bookings).set({ status: "expired" }).where(eq(bookings.id, booking.id));
+
+      await broadcastSlotChange({
+        courtId: booking.courtId,
+        startTime: booking.startTime.toISOString(),
+        state: "free",
+      });
+    }
+  }
+
+  // --- Subscription payment: extend one month from now ---
+  if (payment.subscription && result === "success") {
+    const nextPeriodEnd = new Date();
+    nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
+
+    await db
+      .update(subscriptions)
+      .set({ status: "active", currentPeriodEnd: nextPeriodEnd, trialEndsAt: null })
+      .where(eq(subscriptions.id, payment.subscription.id));
+
+    console.info(
+      `[midtrans] langganan ${payment.subscription.id} aktif s.d. ${nextPeriodEnd.toISOString()} (trial ${TRIAL_DAYS} hari selesai).`,
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venue & Court — Padel Booking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.38.0/tabler-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Plus Jakarta Sans','system-ui','sans-serif'], display:['Sora','Plus Jakarta Sans','sans-serif'] }, colors:{ brand:{50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d'}, teal:{400:'#2dd4bf',500:'#14b8a6',600:'#0d9488'} } } } }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-50 dark:bg-[#0a0f0d] text-gray-900 dark:text-gray-100 transition-colors">
+<div id="bar"></div><div id="trail"></div>
+
+<div class="shell">
+  <aside class="side bg-white dark:bg-[#0c120f] border-r border-gray-100 dark:border-white/10 p-5">
+    <a href="index.html" class="flex items-center gap-2.5 mb-8"><div class="w-10 h-10 rounded-xl aurora flex items-center justify-center"><i class="ti ti-paddle text-white text-xl"></i></div><span class="text-xl font-extrabold font-display gtext">Padel Booking</span></a>
+    <div class="mb-6">
+      <label class="text-xs text-gray-400 font-semibold">Venue Aktif</label>
+      <select class="input mt-1"><option>Padel Central</option><option>Smash Arena</option></select>
+    </div>
+    <nav class="space-y-1">
+      <a href="owner-dashboard.html" class="nav-item"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+      <a href="owner-venues.html" class="nav-item active"><i class="ti ti-building-store"></i> Venue & Court</a>
+      <a href="owner-dashboard.html" class="nav-item"><i class="ti ti-calendar-event"></i> Booking</a>
+      <a href="owner-dashboard.html" class="nav-item"><i class="ti ti-chart-line"></i> Pendapatan</a>
+      <a href="owner-dashboard.html" class="nav-item"><i class="ti ti-credit-card"></i> Langganan</a>
+      <a href="index.html" class="nav-item"><i class="ti ti-world"></i> Lihat Publik</a>
+    </nav>
+    <div class="mt-8 p-4 rounded-2xl bg-gradient-to-br from-brand-500 to-teal-500 text-white">
+      <div class="flex items-center gap-2 font-semibold text-sm"><i class="ti ti-circle-check"></i> Pro Aktif</div>
+      <p class="text-xs mt-1 opacity-90">Berlaku s.d. 18 Agu 2026</p>
+    </div>
+    <a href="index.html" class="nav-item mt-2"><i class="ti ti-logout"></i> Keluar</a>
+  </aside>
+
+  <div class="min-w-0">
+    <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-[#0a0f0d]/80 border-b border-gray-100 dark:border-white/10">
+      <div class="flex items-center justify-between px-6 py-4">
+        <div><h1 class="text-xl font-extrabold font-display">Venue & Court</h1><p class="text-xs text-gray-400">Kelola venue, court, harga & ketersediaan.</p></div>
+        <div class="flex items-center gap-3">
+          <button onclick="openVenueModal()" class="px-4 py-2.5 bg-brand-600 text-white rounded-xl font-semibold text-sm hover:bg-brand-700 transition flex items-center gap-2"><i class="ti ti-plus"></i> Venue Baru</button>
+          <div id="themeSwitch" class="switch" title="Dark mode"><div class="knob"></div></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="p-6 space-y-6">
+      <!-- venue card -->
+      <div class="reveal bg-white dark:bg-[#111714] rounded-3xl border border-gray-100 dark:border-white/10 overflow-hidden">
+        <div class="h-36 relative">
+          <img src="https://images.unsplash.com/photo-1554068950-cb1da4204267?w=1000&h=300&fit=crop&q=80" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+          <div class="absolute bottom-3 left-5 text-white flex items-center gap-2"><span class="chip chip-green"><span class="w-1.5 h-1.5 rounded-full bg-green-500 pdot"></span> Published</span></div>
+          <div class="absolute bottom-3 right-5 flex gap-2">
+            <button class="w-9 h-9 rounded-full bg-white/20 backdrop-blur grid place-items-center text-white hover:bg-white/30 transition" onclick="toast('Edit venue')"><i class="ti ti-edit"></i></button>
+          </div>
+        </div>
+        <div class="p-5">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-extrabold font-display">Padel Central</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><i class="ti ti-map-pin"></i> Jl. Sudirman No. 45, Jakarta Pusat · Buka 06:00–23:00</p>
+              <div class="flex flex-wrap gap-2 mt-2"><span class="chip chip-blue">QRIS</span><span class="chip chip-gray">4 Court</span><span class="chip chip-amber">AC</span></div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-gray-400">Rata-rata harga</div>
+              <div class="text-lg font-extrabold text-brand-600 dark:text-brand-400">Rp 150rb/jam</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- courts grid + pricing -->
+      <div class="reveal d1">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-lg">Daftar Court & Harga</h2>
+          <button onclick="toast('Tambah court')" class="text-brand-600 font-semibold text-sm flex items-center gap-1"><i class="ti ti-plus"></i> Court</button>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2"><span class="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/15 grid place-items-center text-brand-600"><i class="ti ti-border-all"></i></span><h3 class="font-bold">Court 1</h3><span class="chip chip-green">Aktif</span></div>
+              <button class="text-gray-400 hover:text-gray-700 dark:hover:text-white" onclick="toast('Edit court')"><i class="ti ti-dots"></i></button>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Harga dasar (06–17)</span><span class="font-semibold">Rp 130.000</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Harga peak (17–23)</span><span class="font-semibold text-amber-600">Rp 175.000</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Okupansi minggu ini</span><span class="font-semibold text-brand-600">82%</span></div>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="flex-1 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm hover:bg-gray-200 dark:hover:bg-white/10 transition" onclick="toast('Edit harga')"><i class="ti ti-tag"></i> Harga</button>
+              <button class="flex-1 py-2 rounded-xl border border-gray-200 dark:border-white/10 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition" onclick="openBlockModal('Court 1')"><i class="ti ti-lock"></i> Blokir</button>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2"><span class="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/15 grid place-items-center text-brand-600"><i class="ti ti-border-all"></i></span><h3 class="font-bold">Court 2</h3><span class="chip chip-green">Aktif</span></div>
+              <button class="text-gray-400 hover:text-gray-700 dark:hover:text-white" onclick="toast('Edit court')"><i class="ti ti-dots"></i></button>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Harga dasar (06–17)</span><span class="font-semibold">Rp 130.000</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Harga peak (17–23)</span><span class="font-semibold text-amber-600">Rp 175.000</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Okupansi minggu ini</span><span class="font-semibold text-brand-600">74%</span></div>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="flex-1 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm hover:bg-gray-200 dark:hover:bg-white/10 transition" onclick="toast('Edit harga')"><i class="ti ti-tag"></i> Harga</button>
+              <button class="flex-1 py-2 rounded-xl border border-gray-200 dark:border-white/10 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition" onclick="openBlockModal('Court 2')"><i class="ti ti-lock"></i> Blokir</button>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2"><span class="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/15 grid place-items-center text-brand-600"><i class="ti ti-border-all"></i></span><h3 class="font-bold">Court 3</h3><span class="chip chip-green">Aktif</span></div>
+              <button class="text-gray-400 hover:text-gray-700 dark:hover:text-white" onclick="toast('Edit court')"><i class="ti ti-dots"></i></button>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Harga dasar (06–17)</span><span class="font-semibold">Rp 130.000</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Harga peak (17–23)</span><span class="font-semibold text-amber-600">Rp 175.000</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Okupansi minggu ini</span><span class="font-semibold text-brand-600">61%</span></div>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="flex-1 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm hover:bg-gray-200 dark:hover:bg-white/10 transition" onclick="toast('Edit harga')"><i class="ti ti-tag"></i> Harga</button>
+              <button class="flex-1 py-2 rounded-xl border border-gray-200 dark:border-white/10 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition" onclick="openBlockModal('Court 3')"><i class="ti ti-lock"></i> Blokir</button>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2"><span class="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/15 grid place-items-center text-brand-600"><i class="ti ti-border-all"></i></span><h3 class="font-bold">Court 4</h3><span class="chip chip-amber">Maintenance</span></div>
+              <button class="text-gray-400 hover:text-gray-700 dark:hover:text-white" onclick="toast('Edit court')"><i class="ti ti-dots"></i></button>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Harga dasar (06–17)</span><span class="font-semibold">Rp 130.000</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Harga peak (17–23)</span><span class="font-semibold text-amber-600">Rp 175.000</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Okupansi minggu ini</span><span class="font-semibold">—</span></div>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="flex-1 py-2 rounded-xl bg-gray-100 dark:bg-white/5 font-semibold text-sm hover:bg-gray-200 dark:hover:bg-white/10 transition" onclick="toast('Edit harga')"><i class="ti ti-tag"></i> Harga</button>
+              <button class="flex-1 py-2 rounded-xl border border-green-200 text-green-600 dark:border-green-500/30 font-semibold text-sm hover:bg-green-50 dark:hover:bg-green-500/10 transition" onclick="toast('Court dibuka kembali')"><i class="ti ti-lock-open"></i> Buka</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- quick actions -->
+      <div class="reveal d2 grid sm:grid-cols-3 gap-4">
+        <button onclick="toast('Catat walk-in booking')" class="lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 text-left hover:border-brand-300"><div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/15 grid place-items-center text-blue-600 mb-3"><i class="ti ti-user-plus"></i></div><div class="font-bold">Walk-in Booking</div><div class="text-xs text-gray-400 mt-1">Catat booking langsung di tempat</div></button>
+        <button onclick="openBlockModal('')" class="lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 text-left hover:border-brand-300"><div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/15 grid place-items-center text-amber-600 mb-3"><i class="ti ti-calendar-off"></i></div><div class="font-bold">Blokir Slot</div><div class="text-xs text-gray-400 mt-1">Maintenance / event tertutup</div></button>
+        <button onclick="toast('Export jadwal')" class="lift bg-white dark:bg-[#111714] rounded-2xl border border-gray-100 dark:border-white/10 p-5 text-left hover:border-brand-300"><div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-500/15 grid place-items-center text-purple-600 mb-3"><i class="ti ti-calendar-week"></i></div><div class="font-bold">Jadwal Mingguan</div><div class="text-xs text-gray-400 mt-1">Lihat & export semua slot</div></button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- VENUE MODAL -->
+<div id="venueModal" class="fixed inset-0 z-[80] hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeVenueModal()"></div>
+  <div class="absolute inset-x-0 bottom-0 sm:inset-0 sm:m-auto sm:h-fit sm:max-w-lg bg-white dark:bg-[#111714] rounded-t-3xl sm:rounded-3xl p-6 reveal">
+    <div class="flex items-center justify-between mb-5"><h3 class="font-bold text-lg">Venue Baru</h3><button onclick="closeVenueModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 grid place-items-center"><i class="ti ti-x"></i></button></div>
+    <div class="space-y-3">
+      <div><label class="text-sm font-semibold">Nama Venue</label><input class="input mt-1" placeholder="cth. Padel Central"></div>
+      <div><label class="text-sm font-semibold">Kota</label><input class="input mt-1" placeholder="Jakarta Pusat"></div>
+      <div><label class="text-sm font-semibold">Alamat</label><input class="input mt-1" placeholder="Jl. Sudirman No. 45"></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="text-sm font-semibold">Buka</label><input type="time" class="input mt-1" value="06:00"></div><div><label class="text-sm font-semibold">Tutup</label><input type="time" class="input mt-1" value="23:00"></div></div>
+      <div><label class="text-sm font-semibold">Foto (URL)</label><input class="input mt-1" placeholder="https://…"></div>
+    </div>
+    <button class="mt-6 w-full py-3 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition" onclick="toast('Venue disimpan'); closeVenueModal()">Simpan Venue</button>
+  </div>
+</div>
+
+<!-- BLOCK MODAL -->
+<div id="blockModal" class="fixed inset-0 z-[80] hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeBlockModal()"></div>
+  <div class="absolute inset-x-0 bottom-0 sm:inset-0 sm:m-auto sm:h-fit sm:max-w-md bg-white dark:bg-[#111714] rounded-t-3xl sm:rounded-3xl p-6 reveal">
+    <div class="flex items-center justify-between mb-5"><h3 class="font-bold text-lg">Blokir Slot</h3><button onclick="closeBlockModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 grid place-items-center"><i class="ti ti-x"></i></button></div>
+    <div class="space-y-3">
+      <div><label class="text-sm font-semibold">Court</label><input id="blockCourt" class="input mt-1" value="Court 1"></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="text-sm font-semibold">Tanggal</label><input type="date" class="input mt-1" value="2026-07-18"></div><div><label class="text-sm font-semibold">Jam</label><select class="input mt-1"><option>09:00</option><option>10:00</option><option>17:00</option></select></div></div>
+      <div><label class="text-sm font-semibold">Alasan</label><select class="input mt-1"><option>Maintenance</option><option>Event tertutup</option><option>Lainnya</option></select></div>
+    </div>
+    <button class="mt-6 w-full py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition" onclick="toast('Slot diblokir'); closeBlockModal()">Blokir Slot</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  function openVenueModal(){ document.getElementById('venueModal').classList.remove('hidden'); }
+  function closeVenueModal(){ document.getElementById('venueModal').classList.add('hidden'); }
+  function openBlockModal(c){ document.getElementById('blockCourt').value = c || 'Court 1'; document.getElementById('blockModal').classList.remove('hidden'); }
+  function closeBlockModal(){ document.getElementById('blockModal').classList.add('hidden'); }
+</script>
+</body>
+</html>
