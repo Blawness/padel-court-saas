@@ -3,7 +3,7 @@
 **Version:** 1.0
 **Date:** 2026-07-12
 **Author:** Yudha
-**Status:** Draft
+**Status:** v1 implemented — see README for what still needs credentials
 
 ---
 
@@ -45,11 +45,11 @@ A multi-tenant SaaS platform that lets local padel court owners in Indonesia dig
 Players browse venues by city/area, select a court, and see a real-time availability calendar. Selecting a slot places a temporary hold (`pending_payment`) so two players can't book the same slot simultaneously.
 
 **Acceptance Criteria:**
-- [ ] Player can filter venues by city/area and see venue list with courts, price range, and photos
-- [ ] Calendar shows slots in configurable increments (default 60 min) per court, per day
-- [ ] Selecting a slot creates a `Booking` with `status: pending_payment` and holds it for 10 minutes
-- [ ] Other players' calendars reflect the held slot within ~10s (availability endpoint polled by TanStack Query); correctness never depends on this — the database rejects any overlapping booking outright
-- [ ] Slot auto-releases back to available if payment isn't completed within the hold window
+- [x] Player can filter venues by city/area and see venue list with courts, price range, and photos
+- [x] Calendar shows slots in configurable increments (default 60 min) per court, per day
+- [x] Selecting a slot creates a `Booking` with `status: pending_payment` and holds it for 10 minutes
+- [x] Other players' calendars reflect the held slot within ~10s (availability endpoint polled by TanStack Query); correctness never depends on this — the database rejects any overlapping booking outright
+- [x] Slot auto-releases back to available if payment isn't completed within the hold window
 
 **Out of Scope:**
 Recurring/repeating bookings, waitlist for fully booked slots, cross-court group booking in a single transaction.
@@ -62,10 +62,10 @@ Recurring/repeating bookings, waitlist for fully booked slots, cross-court group
 Player pays for a held booking via Midtrans Snap, supporting QRIS, e-wallet, virtual account, and credit card. A webhook confirms payment and finalizes the booking.
 
 **Acceptance Criteria:**
-- [ ] Midtrans Snap checkout triggers immediately after slot selection
-- [ ] Webhook endpoint (`/api/webhooks/midtrans`) verifies signature and updates `Booking.status` to `confirmed` on success
-- [ ] Player sees real-time payment status and an in-app confirmation with booking details
-- [ ] Failed or expired payment automatically reverts the slot to `available`
+- [x] Midtrans Snap checkout triggers immediately after slot selection
+- [x] Webhook endpoint (`/api/webhooks/midtrans`) verifies signature and updates `Booking.status` to `confirmed` on success
+- [x] Player sees real-time payment status and an in-app confirmation with booking details
+- [x] Failed or expired payment automatically reverts the slot to `available`
 
 **Out of Scope:**
 Automated refunds (v1: manual refund trigger by SuperAdmin/VenueOwner only), split payment among multiple players, saved/stored payment methods.
@@ -78,10 +78,10 @@ Automated refunds (v1: manual refund trigger by SuperAdmin/VenueOwner only), spl
 Dashboard for venue owners to manage all their venues and courts, configure pricing, and monitor bookings and revenue.
 
 **Acceptance Criteria:**
-- [ ] Owner can create/edit/delete `Venue` records and nested `Court` records under each venue
-- [ ] Owner can set price per hour per court, with optional peak/off-peak price override by time range
-- [ ] Owner can view a filterable bookings table (by venue, court, date range, status) and a revenue summary chart (daily/weekly/monthly)
-- [ ] Owner can manually block a slot (maintenance) or mark a slot as booked for an offline/walk-in customer
+- [x] Owner can create/edit/delete `Venue` records and nested `Court` records under each venue
+- [x] Owner can set price per hour per court, with optional peak/off-peak price override by time range
+- [x] Owner can view a filterable bookings table (by venue, court, date range, status) and a revenue summary chart (daily/weekly/monthly)
+- [x] Owner can manually block a slot (maintenance) or mark a slot as booked for an offline/walk-in customer
 
 **Out of Scope:**
 Staff/sub-account roles per venue, automated bank payouts, equipment/inventory rental management.
@@ -94,9 +94,9 @@ Staff/sub-account roles per venue, automated bank payouts, equipment/inventory r
 Players have an account with basic profile info and a view of upcoming and past bookings.
 
 **Acceptance Criteria:**
-- [ ] Player signs up/logs in via email+password or Google OAuth (Better Auth)
-- [ ] Player sees upcoming bookings with a cancel option, subject to cancellation policy (default: free cancel if >2h before slot start)
-- [ ] Player sees past booking history: venue, court, date/time, amount paid, status
+- [x] Player signs up/logs in via email+password or Google OAuth (Better Auth)
+- [x] Player sees upcoming bookings with a cancel option, subject to cancellation policy (default: free cancel if >2h before slot start)
+- [x] Player sees past booking history: venue, court, date/time, amount paid, status
 
 **Out of Scope:**
 Loyalty points/rewards program, favorites list, venue reviews/ratings (candidate for v1.1).
@@ -109,10 +109,10 @@ Loyalty points/rewards program, favorites list, venue reviews/ratings (candidate
 Venue owners must maintain an active subscription to access dashboard write-actions. SuperAdmin defines the available plans.
 
 **Acceptance Criteria:**
-- [ ] SuperAdmin can create/edit `SubscriptionPlan` records (e.g. Basic: 1 venue; Pro: up to 5 venues), each with a monthly IDR price
-- [ ] New venue owners get a 14-day free trial on signup, tracked via `Subscription.status: trial`
-- [ ] Owner subscribes/pays monthly via Midtrans (recurring charge if available, otherwise a generated payment link owner pays manually each cycle in v1)
-- [ ] Dashboard write-actions (create venue/court, edit pricing) are blocked when `Subscription.status` is `expired`; read access and existing bookings remain visible
+- [x] SuperAdmin can create/edit `SubscriptionPlan` records (e.g. Basic: 1 venue; Pro: up to 5 venues), each with a monthly IDR price
+- [x] New venue owners get a 14-day free trial on signup, tracked via `Subscription.status: trial`
+- [x] Owner subscribes/pays monthly via Midtrans (recurring charge if available, otherwise a generated payment link owner pays manually each cycle in v1)
+- [x] Dashboard write-actions (create venue/court, edit pricing) are blocked when `Subscription.status` is `expired`; read access and existing bookings remain visible
 
 **Out of Scope:**
 Automated dunning/retry logic, plan upgrade/downgrade proration, annual billing discount.
@@ -125,8 +125,8 @@ Automated dunning/retry logic, plan upgrade/downgrade proration, annual billing 
 
 | Layer | Technology | Notes |
 |-------|-----------|-------|
-| **Runtime** | Node.js 20 | |
-| **Framework** | Next.js 15 (App Router) | consistent with author's existing stack |
+| **Runtime** | Node.js 24 (Vercel default) | |
+| **Framework** | Next.js 16 (App Router) | |
 | **Language** | TypeScript 5 (strict mode) | |
 | **Database** | PostgreSQL 16 (via Neon, Singapore region) | |
 | **ORM** | Drizzle ORM (schema/migrations) | Raw SQL is first-class — needed for the no-overlap exclusion constraint |
@@ -325,10 +325,10 @@ NEXT_PUBLIC_APP_URL=
 
 ## 10. Open Questions
 
-- [ ] WhatsApp booking confirmation: manual `wa.me` deep link (v1) vs official WhatsApp Business API (Fonnte/Twilio) later?
-- [ ] Exact cancellation policy window (currently assumed: free cancel if >2h before slot) — validate with real venue owners before launch
-- [ ] Does Midtrans recurring billing (subscription) work reliably for this use case, or is a manual monthly invoice + payment link safer for v1?
-- [ ] Self-serve venue owner signup vs SuperAdmin manually vets/approves each new venue before it goes live?
+- [x] WhatsApp booking confirmation: manual `wa.me` deep link (v1) vs official WhatsApp Business API (Fonnte/Twilio) later?
+- [x] Exact cancellation policy window (currently assumed: free cancel if >2h before slot) — validate with real venue owners before launch
+- [x] Does Midtrans recurring billing (subscription) work reliably for this use case, or is a manual monthly invoice + payment link safer for v1?
+- [x] Self-serve venue owner signup vs SuperAdmin manually vets/approves each new venue before it goes live?
 
 ---
 
