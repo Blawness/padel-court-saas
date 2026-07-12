@@ -134,7 +134,7 @@ Automated dunning/retry logic, plan upgrade/downgrade proration, annual billing 
 | **Styling** | Tailwind CSS v4 + shadcn/ui | |
 | **State Management** | Zustand (client) + TanStack Query (server state) | |
 | **API Style** | REST via Next.js Route Handlers | |
-| **File Storage** | — (v1: owner pastes an image URL) | venue/court photos; no upload service in v1 |
+| **File Storage** | Vercel Blob | venue/court photos; browser uploads direct via a signed token. Falls back to pasting an image URL when unconfigured |
 | **Payments** | Midtrans (Snap for one-off bookings, recurring/invoice link for subscriptions) | Indonesia-first: QRIS, e-wallet, VA, credit card |
 | **Realtime** | None — TanStack Query polls availability every 10s | No realtime service. Double-booking is prevented by a Postgres exclusion constraint, not by the UI |
 | **Email** | Resend | booking confirmations, payment receipts |

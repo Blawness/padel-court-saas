@@ -13,6 +13,9 @@ export const isMidtransConfigured = Boolean(
 );
 export const isResendConfigured = Boolean(process.env.RESEND_API_KEY);
 
+/** Without a Blob token the venue form falls back to pasting an image URL. */
+export const isBlobConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+
 export const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 /** Minutes a slot stays held as `pending_payment` before auto-release. */

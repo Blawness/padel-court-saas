@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { getOwnerSubscription, isSubscriptionActive } from "@/lib/subscription";
 import { parsePeakRules } from "@/lib/booking";
 import { toDateKey, wibSlotStart } from "@/lib/format";
+import { isBlobConfigured } from "@/lib/env";
 import { VenueManager } from "@/components/dashboard/venue-manager";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,7 @@ export default async function OwnerVenuesPage() {
 
   return (
     <VenueManager
+      blobEnabled={isBlobConfigured}
       canWrite={isSubscriptionActive(subscription)}
       maxVenues={subscription?.plan.maxVenues ?? 0}
       planName={subscription?.plan.name ?? "—"}

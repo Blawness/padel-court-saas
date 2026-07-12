@@ -91,6 +91,7 @@ MIDTRANS_SERVER_KEY=           # blank -> mock Snap page at /payment/mock
 MIDTRANS_CLIENT_KEY=
 MIDTRANS_IS_PRODUCTION=false
 
+BLOB_READ_WRITE_TOKEN=         # blank -> venue form asks for an image URL instead of a file
 RESEND_API_KEY=                # blank -> emails logged to console
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 CRON_SECRET=                   # optional, protects /api/cron/release-holds
@@ -99,6 +100,10 @@ CRON_SECRET=                   # optional, protects /api/cron/release-holds
 ### What each missing credential does
 
 - **No Google OAuth** — email/password sign-in still works; the Google button is simply hidden.
+- **No Vercel Blob** — the venue form takes a pasted image URL instead of a file. With a token,
+  the browser uploads straight to Blob using a short-lived token minted by `/api/upload`, so the
+  bytes never cross a function and the 4.5 MB body limit doesn't apply. The token is only issued
+  to a logged-in `venue_owner` with a live subscription, and is scoped to images ≤5 MB.
 - **No Midtrans** — `createSnapTransaction` returns a mock token and the player is routed to
   `/payment/mock`, which posts the *same notification payload* to `/api/webhooks/midtrans` that
   the real gateway sends. The webhook, its signature check, and the confirm/release logic are the

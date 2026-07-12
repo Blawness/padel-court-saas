@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { formatIDR, formatIDRShort, toDateKey, WIB_OFFSET } from "@/lib/format";
 import { toast } from "@/stores/toast";
+import { PhotoField } from "@/components/dashboard/photo-field";
 
 type PeakRule = { start: string; end: string; price: number };
 
@@ -48,11 +49,13 @@ export function VenueManager({
   canWrite,
   maxVenues,
   planName,
+  blobEnabled,
 }: {
   venues: VenueView[];
   canWrite: boolean;
   maxVenues: number;
   planName: string;
+  blobEnabled: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -279,7 +282,7 @@ export function VenueManager({
               <Field name="openTime" label="Buka" type="time" defaultValue="06:00" required />
               <Field name="closeTime" label="Tutup" type="time" defaultValue="23:00" required />
             </div>
-            <Field name="photo" label="Foto (URL)" type="url" placeholder="https://…" />
+            <PhotoField blobEnabled={blobEnabled} />
             <button type="submit" disabled={busy} className="btn-primary mt-6 w-full py-3">
               {busy ? "Menyimpan…" : "Simpan Venue"}
             </button>
