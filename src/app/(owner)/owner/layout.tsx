@@ -9,8 +9,11 @@ import { LogoutButton } from "@/components/logout-button";
 import { RevealOnScroll } from "@/components/reveal";
 import { SubscriptionStatusChip } from "@/components/status-chip";
 import { formatDate } from "@/lib/format";
+import { privatePage } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePage("Dashboard Owner");
 
 export default async function OwnerLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();

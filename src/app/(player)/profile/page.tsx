@@ -6,8 +6,11 @@ import { getCurrentUser } from "@/lib/auth";
 import { SiteHeader } from "@/components/site-header";
 import { RevealOnScroll } from "@/components/reveal";
 import { ProfileTabs } from "@/components/booking/profile-tabs";
+import { privatePage } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePage("Booking Saya");
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();

@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Sora } from "next/font/google";
+import { site } from "@/lib/site";
 import { Providers } from "@/components/providers";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { Toaster } from "@/components/toaster";
@@ -18,9 +19,51 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: "Padel Booking — Booking lapangan padel real-time",
-  description:
-    "Cari venue padel, lihat slot kosong real-time, booking dan bayar online. Untuk pemilik venue: kelola court, harga, dan pendapatan dalam satu dashboard.",
+  /**
+   * Every relative URL below (canonical, OG image, manifest) is resolved against this, so it
+   * must be the real public origin in production — set NEXT_PUBLIC_APP_URL on the deployment
+   * or the share cards will point at localhost.
+   */
+  metadataBase: new URL(site.url),
+  title: {
+    default: `${site.name} — ${site.tagline}`,
+    // Pages set a bare title ("Cari Venue") and get the brand appended for free.
+    template: `%s — ${site.name}`,
+  },
+  description: site.description,
+  keywords: [...site.keywords],
+  applicationName: site.name,
+  category: "sports",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: site.name,
+    locale: site.locale,
+    url: "/",
+    title: `${site.name} — ${site.tagline}`,
+    description: site.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${site.name} — ${site.tagline}`,
+    description: site.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
+  // Indonesian phone numbers in venue listings would otherwise be auto-linked by iOS Safari.
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  // Tints the browser chrome on mobile; follows the theme the user actually has applied.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: site.ink },
+  ],
+  colorScheme: "light dark",
 };
 
 /** Applies the saved theme before first paint so dark mode never flashes. */

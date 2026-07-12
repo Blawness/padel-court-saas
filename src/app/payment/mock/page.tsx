@@ -6,8 +6,11 @@ import { isMidtransConfigured } from "@/lib/env";
 import { formatIDR, formatSlot } from "@/lib/format";
 import { MockPaymentActions } from "@/components/booking/mock-payment-actions";
 import { RevealOnScroll } from "@/components/reveal";
+import { privatePage } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePage("Pembayaran");
 
 /**
  * Stand-in for the Midtrans Snap popup while no Midtrans keys are configured.

@@ -25,6 +25,9 @@ import { Logo } from "@/components/site-header";
 import { HeroCard } from "@/components/marketing/hero-card";
 import { Pricing } from "@/components/marketing/pricing";
 import { Faq } from "@/components/marketing/faq";
+import { JsonLd } from "@/components/json-ld";
+import { faqItems } from "@/lib/faq";
+import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -105,8 +108,54 @@ export default async function LandingPage() {
     db.select({ n: count() }).from(bookings).where(eq(bookings.status, "confirmed")),
   ]);
 
+  /**
+   * Three graphs on the home page: who we are, a sitelinks search box pointing at the venue
+   * search, and the FAQ (drawn from the same source as the accordion below, so the answers
+   * Google shows are the answers on the page).
+   */
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${site.url}/#organization`,
+        name: site.name,
+        url: site.url,
+        description: site.description,
+        logo: `${site.url}/apple-icon`,
+        areaServed: { "@type": "Country", name: "Indonesia" },
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${site.url}/#website`,
+        name: site.name,
+        url: site.url,
+        inLanguage: "id-ID",
+        publisher: { "@id": `${site.url}/#organization` },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: `${site.url}/venues?q={search_term_string}`,
+          },
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "FAQPage",
+        "@id": `${site.url}/#faq`,
+        mainEntity: faqItems.map((item) => ({
+          "@type": "Question",
+          name: item.q,
+          acceptedAnswer: { "@type": "Answer", text: item.a },
+        })),
+      },
+    ],
+  };
+
   return (
     <div className="dark:bg-ink bg-white">
+      <JsonLd data={jsonLd} />
       <RevealOnScroll />
 
       {/* NAV */}

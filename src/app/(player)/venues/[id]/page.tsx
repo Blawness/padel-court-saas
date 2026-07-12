@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
@@ -8,25 +10,112 @@ import { getCurrentUser } from "@/lib/auth";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { RevealOnScroll } from "@/components/reveal";
 import { BookingClient } from "@/components/booking/booking-client";
+import { JsonLd } from "@/components/json-ld";
 import { parsePeakRules } from "@/lib/booking";
+import { formatIDR } from "@/lib/format";
+import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+/** generateMetadata and the page both need the venue; cache() collapses that into one query. */
+const getVenue = cache(async (id: string) =>
+  db.query.venues.findFirst({
+    where: eq(venues.id, id),
+    with: { courts: { where: eq(courts.isActive, true), orderBy: asc(courts.name) } },
+  }),
+);
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const venue = await getVenue(id);
+  if (!venue) return { title: "Venue tidak ditemukan", robots: { index: false, follow: false } };
+
+  const prices = venue.courts.map((c) => c.pricePerHour);
+  const from = prices.length ? ` Mulai ${formatIDR(Math.min(...prices))}/jam.` : "";
+  const description = `Booking lapangan padel di ${venue.name}, ${venue.city}. ${venue.courts.length} court, buka ${venue.openTime}–${venue.closeTime}.${from} Cek slot kosong real-time dan bayar online.`;
+
+  return {
+    title: `${venue.name} — Booking Lapangan Padel di ${venue.city}`,
+    description,
+    alternates: { canonical: `/venues/${venue.id}` },
+    openGraph: {
+      type: "website",
+      title: `${venue.name} — ${venue.city}`,
+      description,
+      url: `/venues/${venue.id}`,
+      // Falls back to the site-wide OG card when the venue has no photo of its own.
+      images: venue.photos[0] ? [{ url: venue.photos[0], alt: venue.name }] : undefined,
+    },
+    // The root layout's `twitter` block would otherwise win and describe the whole product
+    // instead of this venue — page-level `openGraph` does not propagate into it.
+    twitter: {
+      title: `${venue.name} — ${venue.city}`,
+      description,
+      images: venue.photos[0] ? [venue.photos[0]] : undefined,
+    },
+  };
+}
 
 export default async function VenueBookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [venue, user] = await Promise.all([
-    db.query.venues.findFirst({
-      where: eq(venues.id, id),
-      with: { courts: { where: eq(courts.isActive, true), orderBy: asc(courts.name) } },
-    }),
-    getCurrentUser(),
-  ]);
+  const [venue, user] = await Promise.all([getVenue(id), getCurrentUser()]);
 
   if (!venue) notFound();
 
+  const prices = venue.courts.map((c) => c.pricePerHour);
+
+  /** Lets the venue surface as a rich result for "lapangan padel <kota>" searches. */
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsActivityLocation",
+    "@id": `${site.url}/venues/${venue.id}`,
+    name: venue.name,
+    description: `Lapangan padel di ${venue.city}. ${venue.courts.length} court, buka ${venue.openTime}–${venue.closeTime}.`,
+    url: `${site.url}/venues/${venue.id}`,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: venue.address,
+      addressLocality: venue.city,
+      addressCountry: "ID",
+    },
+    ...(venue.photos.length ? { image: venue.photos } : {}),
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: venue.openTime,
+      closes: venue.closeTime,
+    },
+    ...(prices.length
+      ? {
+          priceRange: `${formatIDR(Math.min(...prices))} - ${formatIDR(Math.max(...prices))} / jam`,
+          makesOffer: venue.courts.map((c) => ({
+            "@type": "Offer",
+            name: c.name,
+            price: c.pricePerHour,
+            priceCurrency: "IDR",
+            availability: "https://schema.org/InStock",
+            url: `${site.url}/venues/${venue.id}`,
+          })),
+        }
+      : {}),
+  };
+
   return (
     <>
+      <JsonLd data={jsonLd} />
       <RevealOnScroll />
 
       <header className="dark:bg-ink/80 sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-xl dark:border-white/10">

@@ -21,8 +21,11 @@ import { RevealOnScroll } from "@/components/reveal";
 import { formatIDRShort, toDateKey, wibSlotStart } from "@/lib/format";
 import { OwnerVerification } from "@/components/dashboard/owner-verification";
 import { PlanManager } from "@/components/dashboard/plan-manager";
+import { privatePage } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePage("Admin");
 
 const monthFmt = new Intl.DateTimeFormat("id-ID", { month: "short", timeZone: "Asia/Jakarta" });
 

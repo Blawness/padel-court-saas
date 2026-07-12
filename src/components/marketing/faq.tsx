@@ -2,25 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-
-const items = [
-  {
-    q: "Apakah bayar di awal saat daftar?",
-    a: "Tidak. Kamu dapat trial 14 hari gratis. Bayar baru setelah trial habis & kamu puas.",
-  },
-  {
-    q: "Metode pembayaran apa yang didukung?",
-    a: "QRIS, GoPay, OVO, Dana, LinkAja, Virtual Account, dan kartu kredit via Midtrans.",
-  },
-  {
-    q: "Bisa kelola lebih dari 1 venue?",
-    a: "Bisa. Paket Pro mendukung hingga 5 venue, Enterprise unlimited.",
-  },
-  {
-    q: "Bagaimana kalau ada double booking?",
-    a: "Tidak akan terjadi. Slot terkunci real-time saat di-hold hingga pembayaran selesai, dan database menolak dua booking yang bertabrakan di court yang sama.",
-  },
-];
+import { faqItems as items } from "@/lib/faq";
 
 export function Faq() {
   const [open, setOpen] = useState<number | null>(null);

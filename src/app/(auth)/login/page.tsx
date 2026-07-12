@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
@@ -7,6 +8,14 @@ import { Logo } from "@/components/site-header";
 import { ThemeSwitch } from "@/components/theme-switch";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Masuk",
+  description: "Masuk ke akun Padel Booking untuk booking lapangan dan mengelola jadwal mainmu.",
+  alternates: { canonical: "/login" },
+  // Nothing to rank for here, and the page redirects once you're signed in.
+  robots: { index: false, follow: true },
+};
 
 export default async function LoginPage({
   searchParams,

@@ -1,11 +1,35 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { SignupForm } from "@/components/auth/signup-form";
 import { Logo } from "@/components/site-header";
 import { ThemeSwitch } from "@/components/theme-switch";
+import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Unlike /login this one is worth indexing: it's the landing page for an owner searching for
+ * "aplikasi booking lapangan padel", and the free-trial pitch is the whole conversion.
+ */
+export const metadata: Metadata = {
+  title: "Daftar Gratis",
+  description:
+    "Buat akun Padel Booking. Pemain bisa langsung booking lapangan; pemilik venue dapat 14 hari uji coba gratis untuk mengelola court, harga, dan pendapatan.",
+  alternates: { canonical: "/signup" },
+  openGraph: {
+    title: `Daftar Gratis — ${site.name}`,
+    description:
+      "Pemain: booking lapangan padel dalam hitungan detik. Pemilik venue: 14 hari uji coba gratis.",
+    url: "/signup",
+  },
+  twitter: {
+    title: `Daftar Gratis — ${site.name}`,
+    description:
+      "Pemain: booking lapangan padel dalam hitungan detik. Pemilik venue: 14 hari uji coba gratis.",
+  },
+};
 
 export default async function SignupPage({
   searchParams,

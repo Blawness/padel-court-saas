@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Calendar, Clock, MapPin, Search, Star } from "lucide-react";
 import { and, asc, eq, ilike } from "drizzle-orm";
@@ -7,8 +8,27 @@ import { getCurrentUser } from "@/lib/auth";
 import { SiteHeader } from "@/components/site-header";
 import { RevealOnScroll } from "@/components/reveal";
 import { formatIDRShort, toDateKey } from "@/lib/format";
+import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Cari Venue Padel",
+  description:
+    "Jelajahi venue padel di Jakarta dan sekitarnya. Bandingkan harga per jam, lihat jam operasional, dan cek slot kosong secara real-time sebelum booking.",
+  alternates: { canonical: "/venues" },
+  openGraph: {
+    title: `Cari Venue Padel — ${site.name}`,
+    description:
+      "Jelajahi venue padel, bandingkan harga per jam, dan cek slot kosong secara real-time.",
+    url: "/venues",
+  },
+  twitter: {
+    title: `Cari Venue Padel — ${site.name}`,
+    description:
+      "Jelajahi venue padel, bandingkan harga per jam, dan cek slot kosong secara real-time.",
+  },
+};
 
 type SearchParams = Promise<{ city?: string; q?: string; sort?: string; time?: string }>;
 
