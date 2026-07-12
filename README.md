@@ -46,8 +46,10 @@ degrade gracefully (see below), so you can click through the whole flow immediat
 
 ### Demo accounts
 
-Every seeded account uses the password **`padel1234`** (demo only — change it before this is
-anything real).
+Every seeded account uses the password **`padel1234`** — true for a **fresh local seed only**.
+The production accounts have had their passwords rotated to random ones, and production has a
+separate `super_admin`. Never re-seed production; `pnpm db:seed` refuses non-local databases
+for exactly this reason (pass `SEED_ALLOW_REMOTE=true` only if you truly mean to wipe it).
 
 | Account | Role | Notes |
 |---|---|---|
