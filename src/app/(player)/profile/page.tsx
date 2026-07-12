@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings as bookingsTable } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { releaseExpiredHolds } from "@/lib/booking";
 import { SiteHeader } from "@/components/site-header";
 import { RevealOnScroll } from "@/components/reveal";
 import { ProfileTabs } from "@/components/booking/profile-tabs";
@@ -17,6 +18,10 @@ export default async function ProfilePage() {
   if (!user) redirect("/login?next=/profile");
   if (user.role === "venue_owner") redirect("/owner");
   if (user.role === "super_admin") redirect("/admin");
+
+  // Without this, a player who abandoned checkout keeps seeing the dead booking under
+  // "Akan Datang" as pending_payment until the cron sweeps it.
+  await releaseExpiredHolds();
 
   const bookings = await db.query.bookings.findMany({
     where: eq(bookingsTable.playerId, user.id),
