@@ -42,8 +42,16 @@ export async function POST(req: NextRequest) {
 
   const result = mapTransactionStatus(notification);
 
-  // Midtrans may retry a notification; never process the same success twice.
-  if (payment.status === "success" && result === "success") {
+  // Midtrans may retry a notification, and it also sends late `expire`/`cancel` notices for
+  // an order that already settled. Once a payment is success, no later notification may
+  // downgrade it — that would strip `paidAt` off a booking the player actually paid for.
+  // A refund is the one legitimate transition, and in v1 it's recorded by the owner, not here.
+  if (payment.status === "success") {
+    if (result !== "success") {
+      console.warn(
+        `[midtrans] notifikasi ${notification.transaction_status} untuk order ${notification.order_id} yang sudah lunas — diabaikan.`,
+      );
+    }
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
@@ -52,7 +60,7 @@ export async function POST(req: NextRequest) {
     .set({
       status: result,
       paymentMethod: notification.payment_type ?? payment.paymentMethod,
-      paidAt: result === "success" ? new Date() : null,
+      paidAt: result === "success" ? new Date() : payment.paidAt,
     })
     .where(eq(payments.id, payment.id));
 
@@ -103,9 +111,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // --- Subscription payment: extend one month from now ---
+  // --- Subscription payment: extend by one month ---
   if (payment.subscription && result === "success") {
-    const nextPeriodEnd = new Date();
+    // Extend from whatever is left of the current period, not from today — an owner who
+    // renews a week early would otherwise pay to lose that week.
+    const current = payment.subscription.currentPeriodEnd;
+    const base = current > new Date() ? new Date(current) : new Date();
+    const nextPeriodEnd = new Date(base);
     nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
 
     await db

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { courts } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
+import { countFutureConfirmedBookings } from "@/lib/booking";
 import { requireActiveSubscription } from "@/lib/subscription";
 import { apiError } from "@/lib/utils";
 
@@ -56,12 +57,26 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   }
 }
 
-/** DELETE /api/courts/{id} */
+/**
+ * DELETE /api/courts/{id} — refused while the court still has paid bookings ahead of it,
+ * since the delete cascades to Booking. Deactivating (isActive: false) hides the court from
+ * players without touching those bookings, which is what an owner usually wants anyway.
+ */
 export async function DELETE(_req: NextRequest, { params }: Ctx) {
   try {
     const { id } = await params;
     const check = await assertCourtOwner(id);
     if (check.error) return check.error;
+
+    const upcoming = await countFutureConfirmedBookings({ courtId: id });
+    if (upcoming > 0) {
+      return NextResponse.json(
+        {
+          error: `Court ini masih punya ${upcoming} booking terkonfirmasi ke depan. Batalkan booking tersebut dulu, atau nonaktifkan court-nya.`,
+        },
+        { status: 409 },
+      );
+    }
 
     await db.delete(courts).where(eq(courts.id, id));
     return NextResponse.json({ ok: true });

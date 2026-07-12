@@ -47,7 +47,9 @@ export async function GET(req: NextRequest) {
 
     const sp = req.nextUrl.searchParams;
     const granularity = (sp.get("granularity") ?? "daily") as Granularity;
-    const days = Math.min(Number(sp.get("days") ?? 7) || 7, 365);
+    // Clamped both ways: a non-positive `days` would produce an empty series and a negative
+    // utilisation capacity.
+    const days = Math.min(Math.max(Math.floor(Number(sp.get("days")) || 7), 1), 365);
     const venueId = sp.get("venueId");
 
     // Start of the window = midnight WIB, `days-1` days ago.

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { courts, payments } from "@/db/schema";
+import { bookings, courts, payments } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { createBooking } from "@/lib/booking";
 import { createSnapTransaction } from "@/lib/midtrans";
@@ -29,6 +29,14 @@ export async function POST(req: NextRequest) {
     }
     const end = new Date(start.getTime() + 60 * 60 * 1000);
 
+    // Resolved before the hold is taken: a 404 after the insert would leave the slot locked
+    // for the full 10 minutes for a booking that can never be paid.
+    const court = await db.query.courts.findFirst({
+      where: eq(courts.id, courtId),
+      with: { venue: true },
+    });
+    if (!court) return NextResponse.json({ error: "Court tidak ditemukan." }, { status: 404 });
+
     const booking = await createBooking({
       courtId,
       playerId: user.id,
@@ -38,27 +46,34 @@ export async function POST(req: NextRequest) {
       source: "online",
     });
 
-    const court = await db.query.courts.findFirst({
-      where: eq(courts.id, courtId),
-      with: { venue: true },
-    });
-    if (!court) return NextResponse.json({ error: "Court tidak ditemukan." }, { status: 404 });
-
     const orderId = `PB-${booking.id.slice(0, 8).toUpperCase()}-${Date.now().toString(36)}`;
-    const snap = await createSnapTransaction({
-      orderId,
-      amount: booking.totalPrice,
-      itemName: `${court.venue.name} - ${court.name}`,
-      customer: { name: user.fullName, email: user.email, phone: user.phone },
-    });
 
-    await db.insert(payments).values({
-      bookingId: booking.id,
-      midtransOrderId: orderId,
-      amount: booking.totalPrice,
-      status: "pending",
-      snapToken: snap.token,
-    });
+    // Same reasoning: if Snap is down, hand the slot straight back instead of holding it
+    // hostage until the hold lapses.
+    let snap;
+    try {
+      snap = await createSnapTransaction({
+        orderId,
+        amount: booking.totalPrice,
+        itemName: `${court.venue.name} - ${court.name}`,
+        customer: { name: user.fullName, email: user.email, phone: user.phone },
+      });
+
+      await db.insert(payments).values({
+        bookingId: booking.id,
+        midtransOrderId: orderId,
+        amount: booking.totalPrice,
+        status: "pending",
+        snapToken: snap.token,
+      });
+    } catch (err) {
+      await db.update(bookings).set({ status: "expired" }).where(eq(bookings.id, booking.id));
+      console.error("[bookings] gagal membuat pembayaran, hold dilepas:", err);
+      return NextResponse.json(
+        { error: "Gagal membuat pembayaran. Coba lagi sebentar lagi." },
+        { status: 502 },
+      );
+    }
 
     await broadcastSlotChange({
       courtId,

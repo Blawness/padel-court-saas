@@ -1,6 +1,13 @@
-import { and, eq, gt, inArray, lt } from "drizzle-orm";
+import { and, count, eq, gt, inArray, lt } from "drizzle-orm";
 import { db } from "@/db";
-import { bookings, courts, type Booking, type Court, type PeakRule } from "@/db/schema";
+import {
+  bookings,
+  courts,
+  type Booking,
+  type Court,
+  type PeakRule,
+  type Venue,
+} from "@/db/schema";
 import { HOLD_MINUTES } from "@/lib/env";
 import { jakartaHour, wibSlotStart } from "@/lib/format";
 
@@ -23,6 +30,49 @@ const toMinutes = (hhmm: string): number => {
   const [h, m] = hhmm.split(":").map(Number);
   return (h ?? 0) * 60 + (m ?? 0);
 };
+
+/**
+ * The bookable hour range for a venue. A slot is one whole hour, so a venue that opens at
+ * 06:30 has its first slot at 06:00 and one that closes at 22:30 has its last at 22:00.
+ */
+export function openCloseHours(venue: Pick<Venue, "openTime" | "closeTime">): {
+  openHour: number;
+  closeHour: number;
+} {
+  return {
+    openHour: Math.floor(toMinutes(venue.openTime) / 60),
+    closeHour: Math.ceil(toMinutes(venue.closeTime) / 60),
+  };
+}
+
+export class InvalidSlotError extends Error {}
+
+/**
+ * A slot is only bookable if it starts exactly on the hour and falls inside the venue's
+ * operating hours. Nothing upstream enforces this — the API takes a raw ISO timestamp — so
+ * without this check a crafted request could book 03:17 on a venue that opens at 06:00, and
+ * the resulting booking would never line up with the hourly grid the calendar renders.
+ */
+export function assertBookableSlot(
+  venue: Pick<Venue, "openTime" | "closeTime">,
+  start: Date,
+): void {
+  if (Number.isNaN(start.getTime())) {
+    throw new InvalidSlotError("Waktu mulai tidak valid.");
+  }
+  // WIB is a whole-hour offset from UTC, so an exact WIB hour is an exact UTC hour too.
+  if (start.getUTCMinutes() !== 0 || start.getUTCSeconds() !== 0 || start.getUTCMilliseconds() !== 0) {
+    throw new InvalidSlotError("Booking hanya bisa pas di awal jam (mis. 19:00).");
+  }
+
+  const { openHour, closeHour } = openCloseHours(venue);
+  const hour = jakartaHour(start);
+  if (hour < openHour || hour >= closeHour) {
+    throw new InvalidSlotError(
+      `Venue hanya buka ${venue.openTime}–${venue.closeTime}. Pilih slot di dalam jam operasional.`,
+    );
+  }
+}
 
 /**
  * Price for a 1-hour slot starting at `start`. A peak rule wins if the slot's start
@@ -81,8 +131,7 @@ export async function buildSlots(courtId: string, dateISO: string): Promise<Slot
   });
   if (!court) return [];
 
-  const openHour = Math.floor(toMinutes(court.venue.openTime) / 60);
-  const closeHour = Math.ceil(toMinutes(court.venue.closeTime) / 60);
+  const { openHour, closeHour } = openCloseHours(court.venue);
 
   const dayStart = wibSlotStart(dateISO, openHour);
   const dayEnd = wibSlotStart(dateISO, closeHour);
@@ -127,6 +176,30 @@ export async function buildSlots(courtId: string, dateISO: string): Promise<Slot
   return slots;
 }
 
+/**
+ * Court and Venue both cascade-delete their bookings, so deleting one silently destroys
+ * paid future reservations — the players would just show up to nothing. Callers use this to
+ * refuse the delete until those bookings are cancelled (and refunded) explicitly.
+ */
+export async function countFutureConfirmedBookings(
+  target: { courtId: string } | { venueId: string },
+): Promise<number> {
+  const scope =
+    "courtId" in target
+      ? eq(bookings.courtId, target.courtId)
+      : inArray(
+          bookings.courtId,
+          db.select({ id: courts.id }).from(courts).where(eq(courts.venueId, target.venueId)),
+        );
+
+  const [row] = await db
+    .select({ total: count() })
+    .from(bookings)
+    .where(and(scope, eq(bookings.status, "confirmed"), gt(bookings.startTime, new Date())));
+
+  return row?.total ?? 0;
+}
+
 export class SlotTakenError extends Error {
   constructor() {
     super("Slot ini baru saja diambil orang lain. Pilih slot lain ya.");
@@ -166,8 +239,21 @@ type CreateBookingInput = {
 export async function createBooking(input: CreateBookingInput): Promise<Booking> {
   await releaseExpiredHolds();
 
-  const court = await db.query.courts.findFirst({ where: eq(courts.id, input.courtId) });
-  if (!court || !court.isActive) throw new Error("Court tidak ditemukan atau tidak aktif.");
+  const court = await db.query.courts.findFirst({
+    where: eq(courts.id, input.courtId),
+    with: { venue: { with: { owner: { columns: { ownerStatus: true } } } } },
+  });
+  if (!court || !court.isActive) throw new InvalidSlotError("Court tidak ditemukan atau tidak aktif.");
+
+  const source = input.source ?? "online";
+
+  // The venue list already hides unapproved owners, but the booking endpoint takes a court id
+  // directly, so a player could otherwise book a venue that never passed admin review.
+  if (source === "online" && court.venue.owner.ownerStatus !== "approved") {
+    throw new InvalidSlotError("Venue ini belum aktif untuk booking online.");
+  }
+
+  assertBookableSlot(court.venue, input.start);
 
   const status = input.status ?? "pending_payment";
 
@@ -180,7 +266,7 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
         startTime: input.start,
         endTime: input.end,
         status,
-        source: input.source ?? "online",
+        source,
         totalPrice: input.totalPrice ?? priceForSlot(court, input.start),
         holdExpiresAt:
           status === "pending_payment"

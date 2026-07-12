@@ -4,6 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { courts, venues } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
+import { countFutureConfirmedBookings } from "@/lib/booking";
 import { requireActiveSubscription } from "@/lib/subscription";
 import { apiError } from "@/lib/utils";
 
@@ -66,12 +67,25 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   }
 }
 
-/** DELETE /api/venues/{id} — owner of the venue. Cascades to courts and bookings. */
+/**
+ * DELETE /api/venues/{id} — owner of the venue. Cascades to courts and bookings, so it is
+ * refused while any court still has a paid booking ahead of it.
+ */
 export async function DELETE(_req: NextRequest, { params }: Ctx) {
   try {
     const { id } = await params;
     const check = await assertOwnership(id);
     if (check.error) return check.error;
+
+    const upcoming = await countFutureConfirmedBookings({ venueId: id });
+    if (upcoming > 0) {
+      return NextResponse.json(
+        {
+          error: `Venue ini masih punya ${upcoming} booking terkonfirmasi ke depan. Batalkan booking tersebut dulu sebelum menghapus venue.`,
+        },
+        { status: 409 },
+      );
+    }
 
     await db.delete(venues).where(eq(venues.id, id));
     return NextResponse.json({ ok: true });
