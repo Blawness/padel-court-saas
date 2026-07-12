@@ -57,7 +57,26 @@ function slot(dayOffset: number, hour: number): Date {
   return new Date(`${dateKey}T${String(hour).padStart(2, "0")}:00:00+07:00`);
 }
 
+/**
+ * The seed wipes every table before reloading demo data. That is fine against a local
+ * database and catastrophic against the real one — and the local .env now points at Neon,
+ * so a reflexive `pnpm db:seed` is one keystroke away from deleting production. Refuse
+ * unless someone deliberately says otherwise.
+ */
+function assertSafeTarget(): void {
+  const url = process.env.DATABASE_URL ?? "";
+  const isLocal = url.includes("localhost") || url.includes("127.0.0.1");
+  if (isLocal || process.env.SEED_ALLOW_REMOTE === "true") return;
+
+  throw new Error(
+    `Refusing to seed: DATABASE_URL is not a local database, and seeding DELETES every row ` +
+      `(users, bookings, payments included).\n` +
+      `If you really mean to wipe and reload it, re-run with SEED_ALLOW_REMOTE=true.`,
+  );
+}
+
 async function main() {
+  assertSafeTarget();
   console.info("Seeding…");
 
   // Reset in FK-safe order so the seed is re-runnable.
