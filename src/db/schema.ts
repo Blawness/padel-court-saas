@@ -45,15 +45,74 @@ export const users = pgTable(
   {
     id: uuid().primaryKey().defaultRandom(),
     email: text().notNull(),
+    /** Better Auth's `name` field is mapped onto this column (see lib/auth.ts). */
     fullName: text().notNull(),
     role: roleEnum().notNull().default("player"),
     phone: text(),
     /** Only meaningful for venue_owner. SuperAdmin approves/suspends from the admin panel. */
     ownerStatus: ownerStatusEnum().notNull().default("pending"),
+    // --- required by Better Auth ---
+    emailVerified: boolean().notNull().default(false),
+    image: text(),
     createdAt: now(),
     updatedAt: now().$onUpdate(() => new Date()),
   },
   (t) => [uniqueIndex("User_email_key").on(t.email)],
+);
+
+/* ---------------- Better Auth tables ---------------- */
+
+export const sessions = pgTable(
+  "Session",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text().notNull(),
+    expiresAt: timestamp({ precision: 3, mode: "date" }).notNull(),
+    ipAddress: text(),
+    userAgent: text(),
+    createdAt: now(),
+    updatedAt: now().$onUpdate(() => new Date()),
+  },
+  (t) => [uniqueIndex("Session_token_key").on(t.token), index("Session_userId_idx").on(t.userId)],
+);
+
+export const accounts = pgTable(
+  "Account",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accountId: text().notNull(),
+    providerId: text().notNull(),
+    /** Hashed password for the email/password provider; null for OAuth accounts. */
+    password: text(),
+    accessToken: text(),
+    refreshToken: text(),
+    accessTokenExpiresAt: timestamp({ precision: 3, mode: "date" }),
+    refreshTokenExpiresAt: timestamp({ precision: 3, mode: "date" }),
+    scope: text(),
+    idToken: text(),
+    createdAt: now(),
+    updatedAt: now().$onUpdate(() => new Date()),
+  },
+  (t) => [index("Account_userId_idx").on(t.userId)],
+);
+
+export const verifications = pgTable(
+  "Verification",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    identifier: text().notNull(),
+    value: text().notNull(),
+    expiresAt: timestamp({ precision: 3, mode: "date" }).notNull(),
+    createdAt: now(),
+    updatedAt: now().$onUpdate(() => new Date()),
+  },
+  (t) => [index("Verification_identifier_idx").on(t.identifier)],
 );
 
 export const venues = pgTable(

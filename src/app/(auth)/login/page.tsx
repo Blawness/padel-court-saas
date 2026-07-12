@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { asc } from "drizzle-orm";
-import { db } from "@/db";
-import { users } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isDevLoginEnabled, isSupabaseConfigured } from "@/lib/env";
+import { isGoogleConfigured } from "@/lib/env";
 import { LoginForm } from "@/components/auth/login-form";
 import { Logo } from "@/components/site-header";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -25,15 +22,6 @@ export default async function LoginPage({
     );
   }
 
-  // In dev mode there are no passwords — offer the seeded accounts as one-click logins.
-  const devAccounts = !isDevLoginEnabled
-    ? []
-    : await db.query.users.findMany({
-        columns: { email: true, fullName: true, role: true },
-        orderBy: asc(users.role),
-        limit: 10,
-      });
-
   return (
     <main className="grid min-h-screen place-items-center px-6 py-12">
       <div className="w-full max-w-md">
@@ -48,23 +36,13 @@ export default async function LoginPage({
             Booking lapangan, kelola venue, semua di satu akun.
           </p>
 
-          {error === "oauth" ? (
+          {error ? (
             <p className="chip chip-red mt-4 w-full justify-center py-2">
-              Login Google gagal. Coba lagi.
+              Login gagal. Coba lagi.
             </p>
           ) : null}
 
-          {!isSupabaseConfigured && !isDevLoginEnabled ? (
-            <p className="chip chip-amber mt-4 w-full justify-center py-2 text-center">
-              Auth belum dikonfigurasi. Set Supabase, atau ALLOW_DEV_LOGIN untuk demo.
-            </p>
-          ) : null}
-
-          <LoginForm
-            supabaseEnabled={isSupabaseConfigured}
-            devAccounts={devAccounts}
-            next={next ?? null}
-          />
+          <LoginForm googleEnabled={isGoogleConfigured} next={next ?? null} />
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
             Belum punya akun?{" "}

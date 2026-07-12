@@ -3,20 +3,23 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { DEV_COOKIE, signDevSession } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/env";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth-config";
 import { apiError } from "@/lib/utils";
 
 const schema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(8, "Password minimal 8 karakter."),
   fullName: z.string().min(2),
   phone: z.string().optional(),
-  /** Owner signup is self-serve (PRD §10 decision); the account starts `pending` approval. */
+  /** Only these two are selectable. `super_admin` is never reachable through signup. */
   role: z.enum(["player", "venue_owner"]).default("player"),
 });
 
+/**
+ * POST /api/auth/signup — wraps Better Auth's email sign-up so that role/ownerStatus are
+ * decided here rather than taken from the request body (they're `input: false` in the auth
+ * config). Owner signup is self-serve but lands in `pending` until a SuperAdmin approves.
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = schema.parse(await req.json());
@@ -26,54 +29,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email sudah terdaftar." }, { status: 409 });
     }
 
-    // Players are visible immediately; owners need SuperAdmin approval before their venues go live.
-    const ownerStatus = body.role === "venue_owner" ? ("pending" as const) : ("approved" as const);
+    const result = await auth.api.signUpEmail({
+      body: { email: body.email, password: body.password, name: body.fullName },
+      headers: req.headers,
+      asResponse: true,
+    });
 
-    if (isSupabaseConfigured) {
-      const supabase = await createSupabaseServerClient();
-      const { data, error } = await supabase!.auth.signUp({
-        email: body.email,
-        password: body.password,
-        options: { data: { full_name: body.fullName, role: body.role } },
-      });
-      if (error || !data.user) {
-        return NextResponse.json({ error: error?.message ?? "Signup gagal." }, { status: 400 });
-      }
-
-      const [user] = await db
-        .insert(users)
-        .values({
-          id: data.user.id,
-          email: body.email,
-          fullName: body.fullName,
-          phone: body.phone,
-          role: body.role,
-          ownerStatus,
-        })
-        .returning();
-
-      return NextResponse.json({ user }, { status: 201 });
+    if (!result.ok) {
+      const detail = await result.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: (detail as { message?: string }).message ?? "Pendaftaran gagal." },
+        { status: result.status },
+      );
     }
 
-    // Dev fallback: no password store — the signed dev cookie stands in for a session.
+    // Players are live immediately; owners stay hidden from players until approved.
     const [user] = await db
-      .insert(users)
-      .values({
-        email: body.email,
-        fullName: body.fullName,
-        phone: body.phone,
+      .update(users)
+      .set({
         role: body.role,
-        ownerStatus,
+        phone: body.phone,
+        ownerStatus: body.role === "venue_owner" ? "pending" : "approved",
       })
+      .where(eq(users.email, body.email))
       .returning();
 
+    // Forward Better Auth's Set-Cookie so the new user lands already signed in.
     const res = NextResponse.json({ user }, { status: 201 });
-    res.cookies.set(DEV_COOKIE, signDevSession(user.id), {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    for (const cookie of result.headers.getSetCookie()) {
+      res.headers.append("set-cookie", cookie);
+    }
     return res;
   } catch (err) {
     return apiError(err);

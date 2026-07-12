@@ -6,13 +6,7 @@ import { toast } from "@/stores/toast";
 
 type Role = "player" | "venue_owner";
 
-export function SignupForm({
-  defaultRole,
-  needsPassword,
-}: {
-  defaultRole: Role;
-  needsPassword: boolean;
-}) {
+export function SignupForm({ defaultRole }: { defaultRole: Role }) {
   const router = useRouter();
   const [role, setRole] = useState<Role>(defaultRole);
   const [busy, setBusy] = useState(false);
@@ -29,8 +23,7 @@ export function SignupForm({
         fullName: String(form.get("fullName")),
         email: String(form.get("email")),
         phone: String(form.get("phone") || "") || undefined,
-        // The dev fallback has no password store, but the API still requires the field.
-        password: String(form.get("password") || "devpassword"),
+        password: String(form.get("password")),
         role,
       }),
     });
@@ -66,9 +59,13 @@ export function SignupForm({
       <Field name="fullName" label="Nama lengkap" placeholder="Nama kamu" required />
       <Field name="email" label="Email" type="email" placeholder="kamu@email.com" required />
       <Field name="phone" label="No. WhatsApp (opsional)" placeholder="+62812…" />
-      {needsPassword ? (
-        <Field name="password" label="Password" type="password" placeholder="••••••••" required />
-      ) : null}
+      <Field
+        name="password"
+        label="Password (min. 8 karakter)"
+        type="password"
+        placeholder="••••••••"
+        required
+      />
 
       <button type="submit" disabled={busy} className="btn-primary w-full py-3">
         {busy ? "Memproses…" : "Buat akun"}

@@ -1,18 +1,47 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import * as schema from "./schema";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
 import {
+  accounts,
   bookings,
   courts,
   payments,
+  sessions,
   subscriptionPlans,
   subscriptions,
   users,
   venues,
-} from "./schema";
+  verifications,
+  type OwnerStatus,
+  type Role,
+} from "@/db/schema";
+import { auth } from "@/lib/auth-config";
 
-const client = postgres(process.env.DATABASE_URL!, { max: 1 });
-const db = drizzle(client, { schema, casing: "camelCase" });
+/** Every seeded account uses this password — demo only. */
+const DEMO_PASSWORD = "padel1234";
+
+/**
+ * Creates a real Better Auth account (properly hashed password), then applies the role and
+ * profile fields that signup is not allowed to set from user input.
+ */
+async function createUser(input: {
+  email: string;
+  fullName: string;
+  role: Role;
+  ownerStatus: OwnerStatus;
+  phone?: string;
+}) {
+  await auth.api.signUpEmail({
+    body: { email: input.email, password: DEMO_PASSWORD, name: input.fullName },
+  });
+
+  const [user] = await db
+    .update(users)
+    .set({ role: input.role, ownerStatus: input.ownerStatus, phone: input.phone })
+    .where(eq(users.email, input.email))
+    .returning();
+
+  return user;
+}
 
 const HOUR = 60 * 60 * 1000;
 
@@ -38,6 +67,9 @@ async function main() {
   await db.delete(venues);
   await db.delete(subscriptions);
   await db.delete(subscriptionPlans);
+  await db.delete(sessions);
+  await db.delete(accounts);
+  await db.delete(verifications);
   await db.delete(users);
 
   const [basic, pro] = await db
@@ -48,34 +80,28 @@ async function main() {
     ])
     .returning();
 
-  const [admin] = await db
-    .insert(users)
-    .values({
-      email: "admin@padel.id",
-      fullName: "Super Admin",
-      role: "super_admin",
-      ownerStatus: "approved",
-    })
-    .returning();
+  const admin = await createUser({
+    email: "admin@padel.id",
+    fullName: "Super Admin",
+    role: "super_admin",
+    ownerStatus: "approved",
+  });
 
-  const [owner] = await db
-    .insert(users)
-    .values({
-      email: "budi@padelcentral.id",
-      fullName: "Budi Santoso",
-      role: "venue_owner",
-      phone: "+6281234567890",
-      ownerStatus: "approved",
-    })
-    .returning();
+  const owner = await createUser({
+    email: "budi@padelcentral.id",
+    fullName: "Budi Santoso",
+    role: "venue_owner",
+    ownerStatus: "approved",
+    phone: "+6281234567890",
+  });
 
   // A second owner still awaiting verification, so the admin panel has something to act on.
-  await db.insert(users).values({
+  await createUser({
     email: "sari@smasharena.id",
     fullName: "Sari Wijaya",
     role: "venue_owner",
-    phone: "+6281298765432",
     ownerStatus: "pending",
+    phone: "+6281298765432",
   });
 
   const periodEnd = new Date();
@@ -107,32 +133,16 @@ async function main() {
     });
   }
 
-  const players = await db
-    .insert(users)
-    .values([
-      {
-        email: "rina@email.com",
-        fullName: "Rina Anjani",
-        phone: "+6281211112222",
-        role: "player" as const,
-        ownerStatus: "approved" as const,
-      },
-      {
-        email: "andi@email.com",
-        fullName: "Andi Pratama",
-        phone: "+6281233334444",
-        role: "player" as const,
-        ownerStatus: "approved" as const,
-      },
-      {
-        email: "dedi@email.com",
-        fullName: "Dedi Rahman",
-        phone: "+6281255556666",
-        role: "player" as const,
-        ownerStatus: "approved" as const,
-      },
-    ])
-    .returning();
+  const players = [];
+  for (const p of [
+    { email: "rina@email.com", fullName: "Rina Anjani", phone: "+6281211112222" },
+    { email: "andi@email.com", fullName: "Andi Pratama", phone: "+6281233334444" },
+    { email: "dedi@email.com", fullName: "Dedi Rahman", phone: "+6281255556666" },
+  ]) {
+    players.push(
+      await createUser({ ...p, role: "player", ownerStatus: "approved" }),
+    );
+  }
 
   const [venue] = await db
     .insert(venues)
@@ -230,12 +240,13 @@ async function main() {
   Pending: sari@smasharena.id (menunggu verifikasi)
   Players: ${players.map((p) => p.email).join(", ")}
   Venue  : ${venue.name} — ${courtRows.length} court
-  Plans  : ${basic.name}, ${pro.name}`);
+  Plans  : ${basic.name}, ${pro.name}
+  Password semua akun: ${DEMO_PASSWORD}`);
 }
 
 main()
+  .then(() => process.exit(0))
   .catch((e) => {
     console.error(e);
     process.exit(1);
-  })
-  .finally(() => client.end());
+  });

@@ -6,14 +6,18 @@ venue owners manage courts, pricing, and revenue from a dashboard behind a month
 
 ## Stack
 
-Next.js 16 (App Router) · TypeScript 5 strict · Tailwind CSS v4 · Drizzle ORM + PostgreSQL 16 ·
-Supabase (Auth / Realtime / Storage) · Zustand + TanStack Query · Midtrans Snap · Resend · pnpm.
+Next.js 16 (App Router) · TypeScript 5 strict · Tailwind CSS v4 · Drizzle ORM + PostgreSQL ·
+**Better Auth** (email/password + Google) · Supabase Realtime · Zustand + TanStack Query ·
+Midtrans Snap · Resend · pnpm.
 
 > **Deviations from PRD §4:** Next 16 instead of 15, and **Drizzle instead of Prisma** — both
 > requested during handoff. Rationale for Drizzle: lighter serverless cold starts (no query-engine
 > binary), raw SQL is a first-class citizen (the no-overlap constraint below cannot be expressed in
 > any ORM's schema DSL), and driver errors arrive with structured `code` / `constraint_name` fields
-> instead of having to be string-matched out of a message. Everything else matches the PRD.
+> instead of having to be string-matched out of a message.
+>
+> **Auth is Better Auth, not Supabase Auth** (also requested). Supabase is now used only for
+> Realtime slot broadcasts. Everything else matches the PRD.
 
 ## Quick start
 
@@ -36,10 +40,10 @@ pnpm dev
 The app boots with **no external credentials**. Supabase, Midtrans, and Resend each degrade
 gracefully (see below), so you can click through the whole flow immediately.
 
-### Demo accounts (dev login)
+### Demo accounts
 
-With Supabase unconfigured there are no passwords — `/login` lists the seeded accounts as
-one-click logins:
+Every seeded account uses the password **`padel1234`** (demo only — change it before this is
+anything real).
 
 | Account | Role | Notes |
 |---|---|---|
@@ -47,6 +51,22 @@ one-click logins:
 | `budi@padelcentral.id` | venue_owner | Padel Central, 4 courts, Pro plan active |
 | `sari@smasharena.id` | venue_owner | **pending** — approve them from the admin panel |
 | `admin@padel.id` | super_admin | MRR, owner verification, plans |
+
+## Auth (Better Auth)
+
+Email/password out of the box; the "Masuk dengan Google" button appears once
+`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are set. Better Auth owns `/api/auth/*`
+(`sign-in/email`, `sign-out`, `callback/google`, …) and stores sessions in the `Session` /
+`Account` / `Verification` tables.
+
+**Roles can never be self-assigned.** `role` and `ownerStatus` are declared `input: false` in
+the Better Auth config, so passing `{"role":"super_admin"}` in a sign-up body is ignored — the
+account is created as a plain `player`. Role is set server-side by `POST /api/auth/signup`,
+which only accepts `player` or `venue_owner`. A new owner lands in `ownerStatus: pending` and
+their venues stay hidden from players until a SuperAdmin approves them.
+
+(The earlier password-less "dev login" is gone entirely — it was a backdoor that let anyone
+sign in as `super_admin` by knowing an email address.)
 
 ## Environment variables
 
@@ -192,16 +212,11 @@ DATABASE_URL="<direct-url>" pnpm db:migrate
 DATABASE_URL="<direct-url>" pnpm db:seed
 ```
 
-### ⚠️ The deployed demo has an open door
+### Auth in production
 
-With no Supabase project configured, `/api/auth/dev-login` is the only way in — and it is
-**password-less**: anyone who knows a seeded email can sign in as that user, including
-`super_admin`. It is therefore disabled in production unless `ALLOW_DEV_LOGIN=true`.
-
-That flag **is** currently set on the live demo, so treat the URL as public and disposable.
-Before this is anything more than a demo: configure Supabase Auth (`NEXT_PUBLIC_SUPABASE_URL`
-+ `NEXT_PUBLIC_SUPABASE_ANON_KEY`), which turns the dev login off automatically, and unset
-`ALLOW_DEV_LOGIN`.
+Real passwords, hashed by Better Auth. Set `BETTER_AUTH_SECRET` (`openssl rand -hex 32`) and
+`BETTER_AUTH_URL` (the deployed origin). The seeded demo accounts all share one password, so
+rotate or delete them before treating this as anything but a demo.
 
 ### Cron
 
@@ -215,5 +230,8 @@ slots nobody is looking at.
 1. Midtrans: set `MIDTRANS_SERVER_KEY` / `MIDTRANS_CLIENT_KEY` and point the dashboard's
    **Payment Notification URL** at `https://padel-court-saas.vercel.app/api/webhooks/midtrans`.
    Until then the app uses the mock Snap page.
-2. Supabase: add `https://padel-court-saas.vercel.app/auth/callback` as a redirect URL for
-   Google OAuth.
+2. Google sign-in: create an OAuth client, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, and
+   add `https://padel-court-saas.vercel.app/api/auth/callback/google` as an authorized redirect
+   URI.
+3. Supabase Realtime (optional): set the Supabase env vars to replace the calendar's 15s polling
+   with live slot broadcasts.

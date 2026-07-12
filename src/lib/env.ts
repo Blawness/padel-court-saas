@@ -1,23 +1,18 @@
 /**
- * Feature flags derived from which credentials are present.
- * The app runs fully locally with none of them: Supabase Auth falls back to a
- * signed dev cookie, Midtrans Snap falls back to a mock checkout, and Resend
- * falls back to console logging.
+ * Feature flags derived from which credentials are present. Auth (Better Auth) always
+ * works; the optional ones degrade: Midtrans Snap falls back to a mock checkout, Resend
+ * logs to the console, and without Supabase the calendar polls instead of using Realtime.
  */
 export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
+/** Supabase is now only used for Realtime slot broadcasts — auth is Better Auth. */
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-/**
- * Password-less dev login. Without Supabase this is the only way in, so it is enabled by
- * default in development — but on a deployed, publicly reachable URL it would let anyone
- * sign in as any user, including `super_admin`. It therefore stays OFF in production unless
- * ALLOW_DEV_LOGIN is explicitly set to "true" (acceptable only for a throwaway demo).
- */
-export const isDevLoginEnabled =
-  !isSupabaseConfigured &&
-  (process.env.NODE_ENV !== "production" || process.env.ALLOW_DEV_LOGIN === "true");
+/** Google sign-in shows up only when its OAuth credentials are present. */
+export const isGoogleConfigured = Boolean(
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+);
 export const isMidtransConfigured = Boolean(
   process.env.MIDTRANS_SERVER_KEY && process.env.MIDTRANS_CLIENT_KEY,
 );

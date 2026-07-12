@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/env";
 import { SignupForm } from "@/components/auth/signup-form";
 import { Logo } from "@/components/site-header";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -37,7 +36,7 @@ export default async function SignupPage({
               : "Booking lapangan padel dalam hitungan menit."}
           </p>
 
-          <SignupForm defaultRole={asOwner ? "venue_owner" : "player"} needsPassword={isSupabaseConfigured} />
+          <SignupForm defaultRole={asOwner ? "venue_owner" : "player"} />
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
             Sudah punya akun?{" "}

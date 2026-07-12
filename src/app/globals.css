@@ -128,6 +128,9 @@ body {
   inset: -1.5px;
   border-radius: inherit;
   padding: 1.5px;
+  /* The overlay covers the whole card, so without this it swallows every click inside it
+     — including the login form's submit button. */
+  pointer-events: none;
   background: conic-gradient(from var(--angle), transparent 60%, #22c55e, #14b8a6, transparent);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
