@@ -278,11 +278,38 @@ What the app defends, and how:
 - Refunds are manual (PRD §3 decision). A cancelled paid booking is marked `refunded` in our
   DB; moving the money back is a human step in the Midtrans dashboard.
 
+### What is live in production today
+
+Verified end-to-end against `padel-court-saas.vercel.app`, not just locally: browse → hold a
+slot for 10 minutes → real Midtrans Snap popup → card + 3DS → webhook → booking shows **Lunas**.
+Owner dashboard, admin panel, subscriptions and login rate-limiting all work. Midtrans is on
+**sandbox** keys (verified sandbox-only: 201 from `app.sandbox.midtrans.com`, 401 from
+`app.midtrans.com`), so no real money can move yet.
+
+Production accounts have had their passwords rotated off `padel1234`, and there is a separate
+`super_admin`.
+
 ### Still to wire up
 
-1. Midtrans: set `MIDTRANS_SERVER_KEY` / `MIDTRANS_CLIENT_KEY` and point the dashboard's
-   **Payment Notification URL** at `https://padel-court-saas.vercel.app/api/webhooks/midtrans`.
-   Until then the app uses the mock Snap page.
-2. Google sign-in: create an OAuth client, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, and
-   add `https://padel-court-saas.vercel.app/api/auth/callback/google` as an authorized redirect
-   URI.
+Ordered by what actually blocks selling.
+
+1. **Resend — the one a customer will notice.** `RESEND_API_KEY` is not set in production, so
+   `sendBookingConfirmation` only logs to the console: **a player pays and receives nothing** —
+   no receipt, no booking proof. Set the key (a domain can come later; `onboarding@resend.dev`
+   at least delivers), then set `RESEND_FROM` once a domain is verified.
+2. **Midtrans production keys**, when you're ready to actually charge. Set `MIDTRANS_SERVER_KEY`
+   / `MIDTRANS_CLIENT_KEY` / `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` to the live values, and flip
+   **both** `MIDTRANS_IS_PRODUCTION` *and* `NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION` to `true` —
+   the browser reads the `NEXT_PUBLIC_` one to pick which Snap script to load. Then set the
+   **Payment Notification URL** to `https://padel-court-saas.vercel.app/api/webhooks/midtrans`
+   in the **production** Midtrans dashboard; the sandbox dashboard's config is separate.
+3. **Vercel Blob** — set `BLOB_READ_WRITE_TOKEN` so owners upload a photo file instead of pasting
+   an image URL. The upload path is built and renders correctly, but has never run against a real
+   Blob store.
+4. **Google sign-in** (optional) — create an OAuth client, set `GOOGLE_CLIENT_ID` /
+   `GOOGLE_CLIENT_SECRET`, and add
+   `https://padel-court-saas.vercel.app/api/auth/callback/google` as an authorized redirect URI.
+   Without it the Google button is simply hidden; email/password still works.
+5. **Point local dev back at local Postgres** the day a real venue owner signs up. Right now
+   `.env` talks straight to the production Neon database — fine for beta, not fine once someone
+   else's bookings live in there.
