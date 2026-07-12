@@ -8,6 +8,16 @@ export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+/**
+ * Password-less dev login. Without Supabase this is the only way in, so it is enabled by
+ * default in development — but on a deployed, publicly reachable URL it would let anyone
+ * sign in as any user, including `super_admin`. It therefore stays OFF in production unless
+ * ALLOW_DEV_LOGIN is explicitly set to "true" (acceptable only for a throwaway demo).
+ */
+export const isDevLoginEnabled =
+  !isSupabaseConfigured &&
+  (process.env.NODE_ENV !== "production" || process.env.ALLOW_DEV_LOGIN === "true");
 export const isMidtransConfigured = Boolean(
   process.env.MIDTRANS_SERVER_KEY && process.env.MIDTRANS_CLIENT_KEY,
 );

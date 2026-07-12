@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { DEV_COOKIE, signDevSession } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/env";
+import { isDevLoginEnabled } from "@/lib/env";
 import { apiError } from "@/lib/utils";
 
 const schema = z.object({ email: z.string().email() });
@@ -15,10 +15,10 @@ const schema = z.object({ email: z.string().email() });
  */
 export async function POST(req: NextRequest) {
   try {
-    if (isSupabaseConfigured) {
+    if (!isDevLoginEnabled) {
       return NextResponse.json(
-        { error: "Supabase aktif — gunakan login email/password." },
-        { status: 400 },
+        { error: "Login dev dinonaktifkan. Gunakan email/password." },
+        { status: 403 },
       );
     }
 

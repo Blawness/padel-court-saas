@@ -171,10 +171,49 @@ pnpm db:seed      # reset + seed demo data
 pnpm db:studio    # drizzle studio
 ```
 
-## Deploying to Vercel
+## Deployment
 
-1. Set every env var above (Supabase pooled `DATABASE_URL`, real Midtrans + Resend keys).
-2. Point the Midtrans dashboard's **Payment Notification URL** at
-   `https://<your-app>/api/webhooks/midtrans`.
-3. Add `https://<your-app>/auth/callback` as a Supabase redirect URL for Google OAuth.
-4. `vercel.json` already registers the hold-release cron; set `CRON_SECRET` to protect it.
+Live: **https://padel-court-saas.vercel.app** — Vercel + Neon Postgres (`aws-ap-southeast-1`,
+Singapore, closest region to Indonesian users).
+
+### Connection string: use the pooled endpoint
+
+Serverless functions open many short-lived connections, so `DATABASE_URL` in production points
+at Neon's **pooled** endpoint (`...-pooler...`). That endpoint is PgBouncer in transaction mode,
+which cannot keep a session-scoped prepared statement alive between queries — and postgres.js
+uses prepared statements by default, which would cause random *"prepared statement does not
+exist"* failures. `src/db/index.ts` detects a pooled URL and sets `prepare: false`.
+
+Run **migrations and the seed against the direct (non-pooled) endpoint** — DDL and advisory
+locks are not safe through PgBouncer:
+
+```bash
+DATABASE_URL="<direct-url>" pnpm db:migrate
+DATABASE_URL="<direct-url>" pnpm db:seed
+```
+
+### ⚠️ The deployed demo has an open door
+
+With no Supabase project configured, `/api/auth/dev-login` is the only way in — and it is
+**password-less**: anyone who knows a seeded email can sign in as that user, including
+`super_admin`. It is therefore disabled in production unless `ALLOW_DEV_LOGIN=true`.
+
+That flag **is** currently set on the live demo, so treat the URL as public and disposable.
+Before this is anything more than a demo: configure Supabase Auth (`NEXT_PUBLIC_SUPABASE_URL`
++ `NEXT_PUBLIC_SUPABASE_ANON_KEY`), which turns the dev login off automatically, and unset
+`ALLOW_DEV_LOGIN`.
+
+### Cron
+
+Vercel's Hobby plan only allows **daily** cron jobs, so `/api/cron/release-holds` runs once a
+day rather than every 5 minutes. Correctness does not depend on it: expired holds are also
+swept on every availability read and every booking write. The cron is only a safety net for
+slots nobody is looking at.
+
+### Still to wire up
+
+1. Midtrans: set `MIDTRANS_SERVER_KEY` / `MIDTRANS_CLIENT_KEY` and point the dashboard's
+   **Payment Notification URL** at `https://padel-court-saas.vercel.app/api/webhooks/midtrans`.
+   Until then the app uses the mock Snap page.
+2. Supabase: add `https://padel-court-saas.vercel.app/auth/callback` as a redirect URL for
+   Google OAuth.

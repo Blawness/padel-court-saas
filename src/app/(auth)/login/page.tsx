@@ -4,7 +4,7 @@ import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/env";
+import { isDevLoginEnabled, isSupabaseConfigured } from "@/lib/env";
 import { LoginForm } from "@/components/auth/login-form";
 import { Logo } from "@/components/site-header";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -26,7 +26,7 @@ export default async function LoginPage({
   }
 
   // In dev mode there are no passwords — offer the seeded accounts as one-click logins.
-  const devAccounts = isSupabaseConfigured
+  const devAccounts = !isDevLoginEnabled
     ? []
     : await db.query.users.findMany({
         columns: { email: true, fullName: true, role: true },
@@ -51,6 +51,12 @@ export default async function LoginPage({
           {error === "oauth" ? (
             <p className="chip chip-red mt-4 w-full justify-center py-2">
               Login Google gagal. Coba lagi.
+            </p>
+          ) : null}
+
+          {!isSupabaseConfigured && !isDevLoginEnabled ? (
+            <p className="chip chip-amber mt-4 w-full justify-center py-2 text-center">
+              Auth belum dikonfigurasi. Set Supabase, atau ALLOW_DEV_LOGIN untuk demo.
             </p>
           ) : null}
 
