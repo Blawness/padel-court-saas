@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { AuthError } from "@/lib/auth";
-import { InvalidSlotError, SlotTakenError } from "@/lib/booking";
+import { CancelNotAllowedError, InvalidSlotError, SlotTakenError } from "@/lib/booking";
 import { NextResponse } from "next/server";
 
 export function cn(...inputs: ClassValue[]): string {
@@ -11,6 +11,9 @@ export function cn(...inputs: ClassValue[]): string {
 /** Single error shape for every route handler. */
 export function apiError(err: unknown): NextResponse {
   if (err instanceof AuthError) {
+    return NextResponse.json({ error: err.message }, { status: err.status });
+  }
+  if (err instanceof CancelNotAllowedError) {
     return NextResponse.json({ error: err.message }, { status: err.status });
   }
   if (err instanceof SlotTakenError) {

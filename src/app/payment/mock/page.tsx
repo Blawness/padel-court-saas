@@ -23,6 +23,8 @@ export default async function MockPaymentPage({
   searchParams: Promise<{ order_id?: string }>;
 }) {
   if (isMidtransConfigured) redirect("/venues");
+  // A deploy that forgot the Midtrans keys must not ship a page that marks bookings paid.
+  if (process.env.NODE_ENV === "production") notFound();
 
   const { order_id: orderId } = await searchParams;
   if (!orderId) notFound();

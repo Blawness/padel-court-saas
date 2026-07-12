@@ -8,10 +8,53 @@ import {
   type PeakRule,
   type Venue,
 } from "@/db/schema";
-import { HOLD_MINUTES } from "@/lib/env";
+import { FREE_CANCEL_HOURS, HOLD_MINUTES } from "@/lib/env";
 import { jakartaHour, wibSlotStart } from "@/lib/format";
 
 export type { PeakRule };
+
+/** Carries the HTTP status the route should answer with. */
+export class CancelNotAllowedError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+/** Who is asking to cancel, relative to the booking. A user can be more than one of these. */
+export type CancelActor = { isPlayer: boolean; isOwner: boolean; isAdmin: boolean };
+
+/**
+ * Cancellation policy (PRD §10 decision): a player cancels free up to 2 hours before the
+ * slot starts. The venue owner and super_admin are not bound by that window — they cancel
+ * for maintenance or to issue a refund, which must stay possible right up to the slot.
+ */
+export function assertCancellable(
+  booking: Pick<Booking, "status" | "startTime">,
+  actor: CancelActor,
+  now: Date = new Date(),
+): void {
+  if (!actor.isPlayer && !actor.isOwner && !actor.isAdmin) {
+    throw new CancelNotAllowedError("Bukan booking kamu.", 403);
+  }
+
+  if (booking.status === "cancelled" || booking.status === "expired") {
+    throw new CancelNotAllowedError("Booking ini sudah tidak aktif.", 409);
+  }
+
+  const playerOnly = actor.isPlayer && !actor.isOwner && !actor.isAdmin;
+  if (!playerOnly) return;
+
+  const hoursLeft = (booking.startTime.getTime() - now.getTime()) / 3_600_000;
+  if (hoursLeft < FREE_CANCEL_HOURS) {
+    throw new CancelNotAllowedError(
+      `Pembatalan gratis hanya sampai ${FREE_CANCEL_HOURS} jam sebelum jadwal main. Hubungi venue lewat WhatsApp untuk pembatalan darurat.`,
+      403,
+    );
+  }
+}
 
 /** Court.peakPriceOverride is jsonb; parse it defensively. */
 export function parsePeakRules(value: unknown): PeakRule[] {

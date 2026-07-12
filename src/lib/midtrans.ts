@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import midtransClient from "midtrans-client";
 import { appUrl, isMidtransConfigured } from "@/lib/env";
 
@@ -62,17 +62,43 @@ export type MidtransNotification = {
   payment_type?: string;
 };
 
+export type SignatureConfig = {
+  serverKey: string;
+  /** True only in local/mock mode, where the mock payment page sends unsigned notifications. */
+  allowUnsigned: boolean;
+};
+
+/**
+ * Unsigned notifications are accepted only when there is no server key AND we are not in
+ * production. Treating "no key configured" as "accept everything" in production would let
+ * anyone confirm a booking for free by POSTing to the webhook — the same trap the cron
+ * endpoint had. So production always fails closed, key or no key.
+ */
+export function signatureConfig(): SignatureConfig {
+  return {
+    serverKey,
+    allowUnsigned: !isMidtransConfigured && process.env.NODE_ENV !== "production",
+  };
+}
+
 /**
  * Midtrans signature: sha512(order_id + status_code + gross_amount + server_key).
- * Without a server key (dev/mock mode) there is nothing to verify against, so we
- * accept the notification — the mock payment page is the only thing that can send it.
  */
-export function verifySignature(n: MidtransNotification): boolean {
-  if (!isMidtransConfigured) return true;
+export function verifySignature(
+  n: MidtransNotification,
+  cfg: SignatureConfig = signatureConfig(),
+): boolean {
+  if (cfg.allowUnsigned) return true;
+
   const expected = createHash("sha512")
-    .update(`${n.order_id}${n.status_code}${n.gross_amount}${serverKey}`)
+    .update(`${n.order_id}${n.status_code}${n.gross_amount}${cfg.serverKey}`)
     .digest("hex");
-  return expected === n.signature_key;
+
+  // Constant-time: a plain === leaks how many leading hex chars a guess got right, which
+  // is enough to walk a forged signature out byte by byte.
+  const a = Buffer.from(expected, "utf8");
+  const b = Buffer.from(n.signature_key ?? "", "utf8");
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** Maps Midtrans transaction_status to our Payment.status. */

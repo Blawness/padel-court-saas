@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings, payments } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
-import { FREE_CANCEL_HOURS } from "@/lib/env";
+import { assertCancellable } from "@/lib/booking";
 import { apiError } from "@/lib/utils";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -24,28 +24,11 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
     });
     if (!booking) return NextResponse.json({ error: "Booking tidak ditemukan." }, { status: 404 });
 
-    const isPlayer = booking.playerId === user.id;
-    const isOwner = booking.court.venue.ownerId === user.id;
-    const isAdmin = user.role === "super_admin";
-    if (!isPlayer && !isOwner && !isAdmin) {
-      return NextResponse.json({ error: "Bukan booking kamu." }, { status: 403 });
-    }
-
-    if (booking.status === "cancelled" || booking.status === "expired") {
-      return NextResponse.json({ error: "Booking ini sudah tidak aktif." }, { status: 409 });
-    }
-
-    if (isPlayer && !isOwner && !isAdmin) {
-      const hoursLeft = (booking.startTime.getTime() - Date.now()) / 3_600_000;
-      if (hoursLeft < FREE_CANCEL_HOURS) {
-        return NextResponse.json(
-          {
-            error: `Pembatalan gratis hanya sampai ${FREE_CANCEL_HOURS} jam sebelum jadwal main. Hubungi venue lewat WhatsApp untuk pembatalan darurat.`,
-          },
-          { status: 403 },
-        );
-      }
-    }
+    assertCancellable(booking, {
+      isPlayer: booking.playerId === user.id,
+      isOwner: booking.court.venue.ownerId === user.id,
+      isAdmin: user.role === "super_admin",
+    });
 
     const [cancelled] = await db
       .update(bookings)
