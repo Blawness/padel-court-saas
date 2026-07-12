@@ -203,6 +203,22 @@ pnpm db:studio    # drizzle studio
 Live: **https://padel-court-saas.vercel.app** — Vercel + Neon Postgres (`aws-ap-southeast-1`,
 Singapore, closest region to Indonesian users).
 
+### Migrations
+
+`pnpm build` runs `drizzle-kit migrate` before `next build`, so **every deploy migrates the
+database it is about to run against**. This is deliberate: schema and code ship together, and
+the failure mode where live code queries a column that was never added cannot happen.
+
+Two env vars, on purpose:
+
+- `DATABASE_URL` — the **pooled** Neon endpoint. What the app queries through.
+- `DIRECT_DATABASE_URL` — the same database, **non-pooled** (drop `-pooler` from the host).
+  What migrations use, because the pooler is the wrong place to push DDL. `drizzle.config.ts`
+  prefers it and falls back to `DATABASE_URL` locally, where there is no pooler.
+
+Keep the local `.env` pointed at **local Postgres**. Pointing it at Neon means a stray
+`pnpm db:seed` overwrites production — the seed script is built to wipe and reload demo data.
+
 ### Connection string: use the pooled endpoint
 
 Serverless functions open many short-lived connections, so `DATABASE_URL` in production points
