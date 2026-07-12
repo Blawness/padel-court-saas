@@ -1,13 +1,8 @@
 /**
  * Feature flags derived from which credentials are present. Auth (Better Auth) always
- * works; the optional ones degrade: Midtrans Snap falls back to a mock checkout, Resend
- * logs to the console, and without Supabase the calendar polls instead of using Realtime.
+ * works; the optional ones degrade: Midtrans Snap falls back to a mock checkout and
+ * Resend logs to the console.
  */
-export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-/** Supabase is now only used for Realtime slot broadcasts — auth is Better Auth. */
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 /** Google sign-in shows up only when its OAuth credentials are present. */
 export const isGoogleConfigured = Boolean(

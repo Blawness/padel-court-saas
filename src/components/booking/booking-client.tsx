@@ -7,7 +7,6 @@ import { Info, Lock, Loader2 } from "lucide-react";
 import type { Slot } from "@/lib/booking";
 import { formatIDR, toDateKey } from "@/lib/format";
 import { toast } from "@/stores/toast";
-import { useSlotRealtime } from "@/hooks/use-slot-realtime";
 import { HoldCountdown } from "@/components/booking/hold-countdown";
 import { payWithSnap } from "@/lib/snap";
 
@@ -57,8 +56,10 @@ export function BookingClient({
   const { data, isFetching } = useQuery({
     queryKey,
     enabled: Boolean(courtId),
-    // Polling keeps the grid fresh even without Supabase Realtime configured.
-    refetchInterval: 15_000,
+    // Slots other players hold or pay for show up on the next poll; the DB's
+    // no-overlap constraint — not this — is what prevents double-booking.
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
     queryFn: async (): Promise<{ slots: Slot[] }> => {
       const res = await fetch(`/api/courts/${courtId}/availability?date=${date}`);
       if (!res.ok) throw new Error("Gagal memuat slot.");
@@ -69,8 +70,6 @@ export function BookingClient({
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ["availability"] });
   }, [queryClient]);
-
-  useSlotRealtime(courtId, refresh);
 
   const hold = useMutation({
     mutationFn: async (slot: Slot): Promise<BookingResponse> => {

@@ -6,25 +6,29 @@ venue owners manage courts, pricing, and revenue from a dashboard behind a month
 
 ## Stack
 
-Next.js 16 (App Router) · TypeScript 5 strict · Tailwind CSS v4 · Drizzle ORM + PostgreSQL ·
-**Better Auth** (email/password + Google) · Supabase Realtime · Zustand + TanStack Query ·
-Midtrans Snap · Resend · pnpm.
+Next.js 16 (App Router) · TypeScript 5 strict · Tailwind CSS v4 · Drizzle ORM + PostgreSQL (Neon) ·
+**Better Auth** (email/password + Google) · Zustand + TanStack Query · Midtrans Snap · Resend · pnpm.
 
-> **Deviations from PRD §4:** Next 16 instead of 15, and **Drizzle instead of Prisma** — both
-> requested during handoff. Rationale for Drizzle: lighter serverless cold starts (no query-engine
-> binary), raw SQL is a first-class citizen (the no-overlap constraint below cannot be expressed in
-> any ORM's schema DSL), and driver errors arrive with structured `code` / `constraint_name` fields
-> instead of having to be string-matched out of a message.
+> **Deviations from PRD §4** (all requested during handoff — the PRD has been updated to match):
 >
-> **Auth is Better Auth, not Supabase Auth** (also requested). Supabase is now used only for
-> Realtime slot broadcasts. Everything else matches the PRD.
+> - **Drizzle instead of Prisma.** Lighter serverless cold starts (no query-engine binary), raw SQL
+>   is a first-class citizen (the no-overlap constraint below cannot be expressed in any ORM's
+>   schema DSL), and driver errors arrive with structured `code` / `constraint_name` fields instead
+>   of having to be string-matched out of a message.
+> - **Better Auth instead of Supabase Auth**, on **Neon** Postgres instead of Supabase Postgres.
+> - **No Supabase at all.** Live slot updates come from polling the availability endpoint every 10s
+>   rather than a realtime socket. This costs nothing in correctness: double-booking is prevented by
+>   an exclusion constraint in the database, not by the UI (see "No double-booking" below). The
+>   worst case is a player seeing a stale-free slot for a few seconds and losing the race at commit
+>   time, which is handled with a clear error.
+> - Next 16 instead of 15.
 
 ## Quick start
 
 ```bash
 pnpm install
 
-# 1. Point DATABASE_URL at any Postgres 16 (local or Supabase) — see .env
+# 1. Point DATABASE_URL at any Postgres 16 (local, Neon, or anything else) — see .env
 createdb padel_booking
 
 # 2. Apply migrations (schema + the no-overlap constraint)
@@ -37,8 +41,8 @@ pnpm db:seed
 pnpm dev
 ```
 
-The app boots with **no external credentials**. Supabase, Midtrans, and Resend each degrade
-gracefully (see below), so you can click through the whole flow immediately.
+The app boots with **no external credentials** beyond a Postgres URL. Midtrans and Resend each
+degrade gracefully (see below), so you can click through the whole flow immediately.
 
 ### Demo accounts
 
@@ -73,13 +77,15 @@ sign in as `super_admin` by knowing an email address.)
 All are optional in development (`.env` ships with sensible local defaults).
 
 ```env
-DATABASE_URL=                  # required — Postgres 16 (Supabase pooled URL in prod).
+DATABASE_URL=                  # required — Postgres 16 (Neon pooled URL in prod).
                                # Note: no `?schema=public` — that's a Prisma-ism and postgres.js
                                # fails on it.
 
-NEXT_PUBLIC_SUPABASE_URL=      # blank -> dev-login fallback, no realtime
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+BETTER_AUTH_SECRET=            # required — openssl rand -hex 32
+BETTER_AUTH_URL=http://localhost:3000
+
+GOOGLE_CLIENT_ID=              # blank -> the "Masuk dengan Google" button is hidden
+GOOGLE_CLIENT_SECRET=
 
 MIDTRANS_SERVER_KEY=           # blank -> mock Snap page at /payment/mock
 MIDTRANS_CLIENT_KEY=
@@ -87,16 +93,12 @@ MIDTRANS_IS_PRODUCTION=false
 
 RESEND_API_KEY=                # blank -> emails logged to console
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-DEV_AUTH_SECRET=               # signs the dev-login cookie
 CRON_SECRET=                   # optional, protects /api/cron/release-holds
 ```
 
 ### What each missing credential does
 
-- **No Supabase** — auth falls back to a signed, HTTP-only dev cookie (`/api/auth/dev-login`,
-  which *refuses to run* once Supabase is configured, so it can't become a production backdoor).
-  Realtime broadcasts become no-ops and the calendar relies on TanStack Query polling instead;
-  correctness is unaffected because double-booking is prevented in the database, not the UI.
+- **No Google OAuth** — email/password sign-in still works; the Google button is simply hidden.
 - **No Midtrans** — `createSnapTransaction` returns a mock token and the player is routed to
   `/payment/mock`, which posts the *same notification payload* to `/api/webhooks/midtrans` that
   the real gateway sends. The webhook, its signature check, and the confirm/release logic are the
@@ -233,5 +235,3 @@ slots nobody is looking at.
 2. Google sign-in: create an OAuth client, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, and
    add `https://padel-court-saas.vercel.app/api/auth/callback/google` as an authorized redirect
    URI.
-3. Supabase Realtime (optional): set the Supabase env vars to replace the calendar's 15s polling
-   with live slot broadcasts.

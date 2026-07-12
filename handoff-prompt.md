@@ -31,8 +31,10 @@ padel-booking/
 
 - **Next.js 15** (App Router) + **TypeScript 5 strict**
 - **Tailwind CSS v4** + **shadcn/ui**
-- **PostgreSQL 16** via **Supabase** (DB + Auth + Realtime + Storage)
-- **Prisma 5** (schema/migrations) + Supabase JS client (realtime/storage/auth)
+- **PostgreSQL 16** via **Neon** (Singapore)
+- **Drizzle ORM** (schema/migrations) — bukan Prisma
+- **Better Auth** (email/password + Google) — bukan Supabase Auth
+- **Tanpa Supabase sama sekali.** Kalender update via polling `/api/courts/{id}/availability` tiap 10 detik, bukan realtime socket
 - **Zustand** (client state) + **TanStack Query** (server state)
 - **Midtrans** (Snap one-off + recurring/invoice untuk subscription)
 - **Resend** (email: konfirmasi booking, receipt)
@@ -44,7 +46,7 @@ padel-booking/
 2. `venue_owner` — CRUD venue/court, harga, booking, revenue, subscription
 3. `super_admin` — approve owner, kelola plan, analytics, refund
 
-Role disimpan di `User.role` (Supabase Auth).
+Role disimpan di `User.role` (Better Auth).
 
 ## 🗃️ Data Models (PRD §5 — implement persis)
 
@@ -66,10 +68,10 @@ Gunakan nilai ini agar konsisten dengan mockup:
 
 ## 🚦 MVP Features (PRD §3 — urutan implementasi)
 
-1. **Real-time booking & calendar** — filter kota, slot 60 menit, hold `pending_payment` 10 mnt, broadcast realtime (Supabase Realtime), auto-release.
+1. **Booking & calendar** — filter kota, slot 60 menit, hold `pending_payment` 10 mnt, auto-release. Kalender di-poll tiap 10 detik; anti double-booking dijamin exclusion constraint di Postgres, bukan UI.
 2. **Payment (Midtrans)** — Snap setelah pilih slot, webhook verifikasi signature → `confirmed`, revert ke `available` kalau gagal/expired.
 3. **Owner dashboard** — CRUD venue/court, harga per jam + peak/off-peak, tabel booking filterable, chart revenue (harian/mingguan/bulan), blokir slot & walk-in.
-4. **Player profile & history** — Supabase Auth (email/pwd + Google), cancel (gratis >2j sblm main), riwayat.
+4. **Player profile & history** — Better Auth (email/pwd + Google), cancel (gratis >2j sblm main), riwayat.
 5. **Owner subscription** — SuperAdmin buat `SubscriptionPlan`, trial 14 hari (`trial`), Midtrans monthly, write-action terblokir saat `expired` (read tetap jalan).
 
 ## ✅ Acceptance Criteria (PRD §3)
@@ -79,10 +81,10 @@ Implementasikan semua checkbox AC per fitur. Yang paling kritis: **zero double-b
 ## 📋 Cara Kerja yang Diminta
 
 1. Inisialisasi project Next.js 15 + TS strict + Tailwind v4 + shadcn/ui di root `padel-booking/`.
-2. Setup Prisma schema sesuai PRD §5; generate migration; hubungkan ke Supabase Postgres.
+2. Setup Drizzle schema sesuai PRD §5; generate migration; hubungkan ke Neon Postgres.
 3. Buat design tokens & komponen UI yang mencerminkan `mockup/styles.css` (pakai shadcn sebagai base, override warna/font).
 4. Implementasi route mengikuti struktur PRD §7: `(marketing)`, `(player)`, `(owner)`, `(admin)`, `api/`.
-5. Auth (Supabase) + role guard.
+5. Auth (Better Auth) + role guard.
 6. Fitur MVP 1→5 berurutan, tiap fitur selesai & bisa dijalankan lokal.
 7. Webhook Midtrans dengan verifikasi signature.
 8. Jalankan `pnpm lint` & `pnpm build` — pastikan lolos tanpa error.

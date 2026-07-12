@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { bookings, payments } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { FREE_CANCEL_HOURS } from "@/lib/env";
-import { broadcastSlotChange } from "@/lib/realtime";
 import { apiError } from "@/lib/utils";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -61,12 +60,6 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
         .set({ status: "refunded" })
         .where(and(eq(payments.bookingId, id), eq(payments.status, "success")));
     }
-
-    await broadcastSlotChange({
-      courtId: booking.courtId,
-      startTime: booking.startTime.toISOString(),
-      state: "free",
-    });
 
     return NextResponse.json({ booking: cancelled });
   } catch (err) {

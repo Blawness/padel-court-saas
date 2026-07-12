@@ -6,7 +6,6 @@ import { bookings, courts, payments } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { createBooking } from "@/lib/booking";
 import { createSnapTransaction } from "@/lib/midtrans";
-import { broadcastSlotChange } from "@/lib/realtime";
 import { apiError } from "@/lib/utils";
 
 const schema = z.object({
@@ -74,12 +73,6 @@ export async function POST(req: NextRequest) {
         { status: 502 },
       );
     }
-
-    await broadcastSlotChange({
-      courtId,
-      startTime: booking.startTime.toISOString(),
-      state: "held",
-    });
 
     return NextResponse.json(
       {

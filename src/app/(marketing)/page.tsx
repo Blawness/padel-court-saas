@@ -66,7 +66,7 @@ const features = [
     icon: ShieldCheck,
     tone: "from-amber-500 to-orange-600",
     title: "Aman & Terpercaya",
-    body: "Auth Supabase, pembayaran terenkripsi, dan webhook tanda tangan terverifikasi.",
+    body: "Login terenkripsi, pembayaran lewat gateway resmi, dan webhook tanda tangan terverifikasi.",
   },
 ];
 

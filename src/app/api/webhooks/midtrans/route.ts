@@ -3,7 +3,6 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings, payments, subscriptions } from "@/db/schema";
 import { mapTransactionStatus, verifySignature, type MidtransNotification } from "@/lib/midtrans";
-import { broadcastSlotChange } from "@/lib/realtime";
 import { sendBookingConfirmation } from "@/lib/email";
 import { TRIAL_DAYS } from "@/lib/env";
 
@@ -77,12 +76,6 @@ export async function POST(req: NextRequest) {
           .set({ status: "confirmed", holdExpiresAt: null })
           .where(eq(bookings.id, booking.id));
 
-        await broadcastSlotChange({
-          courtId: booking.courtId,
-          startTime: booking.startTime.toISOString(),
-          state: "taken",
-        });
-
         if (booking.player) {
           await sendBookingConfirmation({
             to: booking.player.email,
@@ -102,12 +95,6 @@ export async function POST(req: NextRequest) {
     } else if (result === "failed" && booking.status === "pending_payment") {
       // Failed / cancelled / expired payment releases the slot back to available.
       await db.update(bookings).set({ status: "expired" }).where(eq(bookings.id, booking.id));
-
-      await broadcastSlotChange({
-        courtId: booking.courtId,
-        startTime: booking.startTime.toISOString(),
-        state: "free",
-      });
     }
   }
 

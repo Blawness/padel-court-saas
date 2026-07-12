@@ -48,7 +48,7 @@ Players browse venues by city/area, select a court, and see a real-time availabi
 - [ ] Player can filter venues by city/area and see venue list with courts, price range, and photos
 - [ ] Calendar shows slots in configurable increments (default 60 min) per court, per day
 - [ ] Selecting a slot creates a `Booking` with `status: pending_payment` and holds it for 10 minutes
-- [ ] Slot is broadcast as unavailable to other players in real time (Supabase Realtime) the instant it's held
+- [ ] Other players' calendars reflect the held slot within ~10s (availability endpoint polled by TanStack Query); correctness never depends on this — the database rejects any overlapping booking outright
 - [ ] Slot auto-releases back to available if payment isn't completed within the hold window
 
 **Out of Scope:**
@@ -94,7 +94,7 @@ Staff/sub-account roles per venue, automated bank payouts, equipment/inventory r
 Players have an account with basic profile info and a view of upcoming and past bookings.
 
 **Acceptance Criteria:**
-- [ ] Player signs up/logs in via email+password or Google OAuth (Supabase Auth)
+- [ ] Player signs up/logs in via email+password or Google OAuth (Better Auth)
 - [ ] Player sees upcoming bookings with a cancel option, subject to cancellation policy (default: free cancel if >2h before slot start)
 - [ ] Player sees past booking history: venue, court, date/time, amount paid, status
 
@@ -128,15 +128,15 @@ Automated dunning/retry logic, plan upgrade/downgrade proration, annual billing 
 | **Runtime** | Node.js 20 | |
 | **Framework** | Next.js 15 (App Router) | consistent with author's existing stack |
 | **Language** | TypeScript 5 (strict mode) | |
-| **Database** | PostgreSQL 16 (via Supabase) | |
-| **ORM** | Prisma 5 (schema/migrations) + Supabase JS client (realtime, storage, auth) | |
-| **Auth** | Supabase Auth | Email/password + Google OAuth; role stored on `User.role` |
+| **Database** | PostgreSQL 16 (via Neon, Singapore region) | |
+| **ORM** | Drizzle ORM (schema/migrations) | Raw SQL is first-class — needed for the no-overlap exclusion constraint |
+| **Auth** | Better Auth | Email/password + Google OAuth; role stored on `User.role` |
 | **Styling** | Tailwind CSS v4 + shadcn/ui | |
 | **State Management** | Zustand (client) + TanStack Query (server state) | |
 | **API Style** | REST via Next.js Route Handlers | |
-| **File Storage** | Supabase Storage | venue/court photos |
+| **File Storage** | — (v1: owner pastes an image URL) | venue/court photos; no upload service in v1 |
 | **Payments** | Midtrans (Snap for one-off bookings, recurring/invoice link for subscriptions) | Indonesia-first: QRIS, e-wallet, VA, credit card |
-| **Realtime** | Supabase Realtime | live slot availability broadcasting |
+| **Realtime** | None — TanStack Query polls availability every 10s | No realtime service. Double-booking is prevented by a Postgres exclusion constraint, not by the UI |
 | **Email** | Resend | booking confirmations, payment receipts |
 | **Deployment** | Vercel | |
 | **Package Manager** | pnpm | |
@@ -146,9 +146,9 @@ Automated dunning/retry logic, plan upgrade/downgrade proration, annual billing 
 ## 5. Data Models
 
 ```typescript
-// User (base auth record, Supabase Auth managed)
+// User (base auth record, Better Auth managed)
 type User = {
-  id: string;              // UUID, matches Supabase Auth user id
+  id: string;              // UUID
   email: string;
   fullName: string;
   role: "player" | "venue_owner" | "super_admin";
@@ -164,7 +164,7 @@ type Venue = {
   name: string;
   city: string;
   address: string;
-  photos: string[];         // Supabase Storage URLs
+  photos: string[];         // image URLs (owner-supplied in v1)
   operatingHours: { open: string; close: string }; // e.g. "06:00" - "23:00"
   createdAt: Date;
   updatedAt: Date;
@@ -274,15 +274,14 @@ padel-court-saas/
 │   ├── booking/                  # Calendar, slot picker
 │   └── dashboard/                # Owner/admin dashboard widgets
 ├── lib/
-│   ├── supabase.ts               # Supabase client
-│   ├── prisma.ts                 # Prisma client
 │   ├── midtrans.ts               # Midtrans SDK wrapper
 │   └── auth.ts                   # Auth helpers, role guards
-├── hooks/
+├── db/
+│   ├── index.ts                  # Drizzle client
+│   ├── schema.ts                 # Drizzle schema
+│   └── seed.ts
 ├── stores/                        # Zustand stores
-├── types/
-└── prisma/
-    └── schema.prisma
+└── drizzle/                       # SQL migrations
 ```
 
 ---
@@ -290,13 +289,14 @@ padel-court-saas/
 ## 8. Environment Variables
 
 ```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# Database (Prisma, points to Supabase Postgres)
+# Database (Drizzle, points to Neon Postgres)
 DATABASE_URL=
+
+# Auth (Better Auth)
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 
 # Midtrans
 MIDTRANS_SERVER_KEY=

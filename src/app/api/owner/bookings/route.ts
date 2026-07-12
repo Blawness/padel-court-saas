@@ -6,7 +6,6 @@ import { bookings, courts, users, venues, type BookingStatus } from "@/db/schema
 import { requireUser } from "@/lib/auth";
 import { requireActiveSubscription } from "@/lib/subscription";
 import { createBooking, releaseExpiredHolds, priceForSlot } from "@/lib/booking";
-import { broadcastSlotChange } from "@/lib/realtime";
 import { apiError } from "@/lib/utils";
 
 /** GET /api/owner/bookings — filterable by venue, court, date range, status. */
@@ -102,12 +101,6 @@ export async function POST(req: NextRequest) {
       guestName: body.kind === "walk_in" ? (body.guestName ?? "Walk-in") : null,
       guestPhone: body.guestPhone ?? null,
       note: body.note ?? null,
-    });
-
-    await broadcastSlotChange({
-      courtId: body.courtId,
-      startTime: start.toISOString(),
-      state: "taken",
     });
 
     return NextResponse.json({ booking }, { status: 201 });
