@@ -190,6 +190,12 @@ export const payments = pgTable(
     bookingId: uuid().references(() => bookings.id, { onDelete: "cascade" }),
     /** Null for booking payments; set for subscription payments. */
     subscriptionId: uuid().references(() => subscriptions.id, { onDelete: "cascade" }),
+    /**
+     * The plan this payment buys. Only applied to the subscription once the payment
+     * succeeds — writing it at checkout would hand out the new plan's limits for free
+     * to anyone who starts a checkout and never pays.
+     */
+    planId: uuid().references(() => subscriptionPlans.id),
     midtransOrderId: text().notNull(),
     amount: integer().notNull(),
     status: paymentStatusEnum().notNull().default("pending"),
@@ -267,6 +273,10 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   subscription: one(subscriptions, {
     fields: [payments.subscriptionId],
     references: [subscriptions.id],
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [payments.planId],
+    references: [subscriptionPlans.id],
   }),
 }));
 

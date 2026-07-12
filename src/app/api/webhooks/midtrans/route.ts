@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // --- Subscription payment: extend by one month ---
+  // --- Subscription payment: apply the purchased plan and extend by one month ---
   if (payment.subscription && result === "success") {
     // Extend from whatever is left of the current period, not from today — an owner who
     // renews a week early would otherwise pay to lose that week.
@@ -109,7 +109,14 @@ export async function POST(req: NextRequest) {
 
     await db
       .update(subscriptions)
-      .set({ status: "active", currentPeriodEnd: nextPeriodEnd, trialEndsAt: null })
+      .set({
+        status: "active",
+        currentPeriodEnd: nextPeriodEnd,
+        trialEndsAt: null,
+        // The plan switch happens here, not at checkout: this is the first moment we know
+        // the owner actually paid for it.
+        ...(payment.planId ? { planId: payment.planId } : {}),
+      })
       .where(eq(subscriptions.id, payment.subscription.id));
 
     console.info(

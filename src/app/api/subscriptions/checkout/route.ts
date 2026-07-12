@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { payments, subscriptionPlans, subscriptions } from "@/db/schema";
+import { payments, subscriptionPlans } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
-import { getOwnerSubscription, type SubscriptionWithPlan } from "@/lib/subscription";
+import { getOwnerSubscription } from "@/lib/subscription";
 import { createSnapTransaction } from "@/lib/midtrans";
 import { apiError } from "@/lib/utils";
 
@@ -26,35 +26,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Belum ada paket langganan tersedia." }, { status: 400 });
     }
 
-    // Switching plans at checkout time is allowed; the new plan takes effect on payment.
-    let subscription: SubscriptionWithPlan = current;
+    // An owner may switch plans at checkout, but the switch is only *recorded* here — the
+    // webhook applies it once the money lands. Writing subscription.planId now would hand
+    // out the new plan's venue limit to anyone who opens a checkout and walks away.
+    let plan = current.plan;
     if (body.planId && body.planId !== current.planId) {
-      const plan = await db.query.subscriptionPlans.findFirst({
-        where: eq(subscriptionPlans.id, body.planId),
+      const picked = await db.query.subscriptionPlans.findFirst({
+        where: and(eq(subscriptionPlans.id, body.planId), eq(subscriptionPlans.isActive, true)),
       });
-      if (!plan) return NextResponse.json({ error: "Paket tidak ditemukan." }, { status: 404 });
-
-      const [updated] = await db
-        .update(subscriptions)
-        .set({ planId: plan.id })
-        .where(eq(subscriptions.id, current.id))
-        .returning();
-
-      subscription = { ...updated, plan };
+      if (!picked) return NextResponse.json({ error: "Paket tidak ditemukan." }, { status: 404 });
+      plan = picked;
     }
 
-    const orderId = `SUB-${subscription.id.slice(0, 8).toUpperCase()}-${Date.now().toString(36)}`;
+    const orderId = `SUB-${current.id.slice(0, 8).toUpperCase()}-${Date.now().toString(36)}`;
     const snap = await createSnapTransaction({
       orderId,
-      amount: subscription.plan.monthlyPrice,
-      itemName: `Langganan ${subscription.plan.name} — 1 bulan`,
+      // Price always comes from the plan row, never from the request body.
+      amount: plan.monthlyPrice,
+      itemName: `Langganan ${plan.name} — 1 bulan`,
       customer: { name: user.fullName, email: user.email, phone: user.phone },
     });
 
     await db.insert(payments).values({
-      subscriptionId: subscription.id,
+      subscriptionId: current.id,
+      planId: plan.id,
       midtransOrderId: orderId,
-      amount: subscription.plan.monthlyPrice,
+      amount: plan.monthlyPrice,
       status: "pending",
       snapToken: snap.token,
     });
@@ -64,7 +61,8 @@ export async function POST(req: NextRequest) {
       snapToken: snap.token,
       redirectUrl: snap.redirectUrl,
       isMock: snap.isMock,
-      amount: subscription.plan.monthlyPrice,
+      amount: plan.monthlyPrice,
+      planName: plan.name,
     });
   } catch (err) {
     return apiError(err);

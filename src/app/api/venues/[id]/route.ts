@@ -18,10 +18,30 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
       where: eq(venues.id, id),
       with: {
         courts: { where: eq(courts.isActive, true), orderBy: asc(courts.name) },
+        owner: { columns: { ownerStatus: true } },
       },
     });
-    if (!venue) return NextResponse.json({ error: "Venue tidak ditemukan." }, { status: 404 });
-    return NextResponse.json({ venue });
+
+    // The list endpoint hides unapproved owners; this one must too, or a suspended venue
+    // stays reachable by direct link. Booking it already fails, but it shouldn't be on show.
+    if (!venue || venue.owner.ownerStatus !== "approved") {
+      return NextResponse.json({ error: "Venue tidak ditemukan." }, { status: 404 });
+    }
+
+    // Listed field by field on purpose: ownerId and the owner row are internal, and a
+    // spread would silently re-expose anything later added to the Venue table.
+    return NextResponse.json({
+      venue: {
+        id: venue.id,
+        name: venue.name,
+        city: venue.city,
+        address: venue.address,
+        photos: venue.photos,
+        openTime: venue.openTime,
+        closeTime: venue.closeTime,
+        courts: venue.courts,
+      },
+    });
   } catch (err) {
     return apiError(err);
   }

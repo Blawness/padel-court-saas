@@ -17,13 +17,21 @@ import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-/** generateMetadata and the page both need the venue; cache() collapses that into one query. */
-const getVenue = cache(async (id: string) =>
-  db.query.venues.findFirst({
+/**
+ * generateMetadata and the page both need the venue; cache() collapses that into one query.
+ * Returns nothing for an unapproved or suspended owner, so their venue 404s here exactly as
+ * it does in the venue list — booking it already fails, but it shouldn't be browsable either.
+ */
+const getVenue = cache(async (id: string) => {
+  const venue = await db.query.venues.findFirst({
     where: eq(venues.id, id),
-    with: { courts: { where: eq(courts.isActive, true), orderBy: asc(courts.name) } },
-  }),
-);
+    with: {
+      courts: { where: eq(courts.isActive, true), orderBy: asc(courts.name) },
+      owner: { columns: { ownerStatus: true } },
+    },
+  });
+  return venue?.owner.ownerStatus === "approved" ? venue : undefined;
+});
 
 export async function generateMetadata({
   params,

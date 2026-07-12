@@ -1,0 +1,2 @@
+ALTER TABLE "Payment" ADD COLUMN "planId" uuid;--> statement-breakpoint
+ALTER TABLE "Payment" ADD CONSTRAINT "Payment_planId_SubscriptionPlan_id_fk" FOREIGN KEY ("planId") REFERENCES "public"."SubscriptionPlan"("id") ON DELETE no action ON UPDATE no action;

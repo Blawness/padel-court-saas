@@ -228,9 +228,37 @@ rotate or delete them before treating this as anything but a demo.
 ### Cron
 
 Vercel's Hobby plan only allows **daily** cron jobs, so `/api/cron/release-holds` runs once a
-day rather than every 5 minutes. Correctness does not depend on it: expired holds are also
-swept on every availability read and every booking write. The cron is only a safety net for
-slots nobody is looking at.
+day rather than every 5 minutes. Correctness does not depend on it: every path that can
+*observe* a lapsed hold sweeps first — availability reads, booking writes, the owner dashboard
+and bookings table, and the player's profile — so a stale `pending_payment` row is never shown
+to anyone and never blocks a slot. The cron is a backstop, not the mechanism.
+
+## Security posture
+
+What the app defends, and how:
+
+| Risk | Control |
+|---|---|
+| Double-booking | Postgres exclusion constraint (`booking_no_overlap`) — not the UI, not a read-then-write check |
+| Free bookings via a forged webhook | sha512 signature, compared in constant time. Unsigned notifications are accepted **only outside production**, so a deploy that forgets `MIDTRANS_SERVER_KEY` fails closed instead of accepting anything. The mock payment page 404s in production for the same reason |
+| Paying less than the price | Amounts are always read from the `Court` / `SubscriptionPlan` row, never from the request body |
+| Getting a paid plan for free | The plan a checkout buys is recorded on the `Payment` row and applied to the subscription **only when the payment settles**. Starting a checkout and walking away changes nothing |
+| Self-granting admin | `role` / `ownerStatus` are `input: false` in the Better Auth config, so a sign-up body cannot set them. `/api/auth/signup` only accepts `player` or `venue_owner` |
+| Booking an unvetted venue | `createBooking` refuses online bookings when the venue's owner is not `approved`; unapproved and suspended owners' venues 404 everywhere public |
+| Password brute force | Better Auth rate limiting (verified: 429 after 3 failed sign-ins in production) |
+| Cron endpoint abuse | `CRON_SECRET` required; in production a missing secret means 401, not open access |
+| Leaking internals in errors | `apiError` returns a generic 500 in production — SQL fragments and connection strings stay in the log |
+
+**Residual risks, accepted for v1:**
+
+- Better Auth's rate limiter stores counters **in memory**, so the limit is per-instance. An
+  attacker spraying across many cold instances gets proportionally more attempts. If this
+  matters, move it to database storage or put a Vercel WAF rate-limit rule in front of
+  `/api/auth/*`.
+- Sign-up reveals whether an email is already registered (409). Standard for consumer apps,
+  but it is user enumeration.
+- Refunds are manual (PRD §3 decision). A cancelled paid booking is marked `refunded` in our
+  DB; moving the money back is a human step in the Midtrans dashboard.
 
 ### Still to wire up
 
